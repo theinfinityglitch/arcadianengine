@@ -7,12 +7,12 @@ namespace ArcadianEngine;
 /// <summary>
 /// A Arcadian Engine project, may it be a app or a game.
 /// </summary>
-public class Game(IArcadianGame? game, GameDataManager dataManager)
+public class Game(IArcadianGame? game, string title, Vector2i windowSize, GameDataManager dataManager)
 {
     private readonly IArcadianGame? _game = game;
     private readonly GameDataManager? _gameData = dataManager;
 
-    public Game(IArcadianGame? game) : this(game, new GameDataManager(game)) { }
+    public Game(IArcadianGame? game, string title, Vector2i windowSize) : this(game, title, windowSize, new GameDataManager(game)) { }
 
     /// <summary>
     /// Initialize the main window and start the game loop.
@@ -23,9 +23,9 @@ public class Game(IArcadianGame? game, GameDataManager dataManager)
         this.LoadContent();
 
 #if DEBUG
-        Raylib.InitWindow(960, 640, $"Test - [Debug]");
+        Raylib.InitWindow(windowSize.x, windowSize.y, $"{title} - [DEBUG]");
 #else
-        Raylib.InitWindow(_data.WindowSize.x, _data.WindowSize.y, $"{_data.Title}");
+        Raylib.InitWindow(windowSize.x, windowSize.y, title);
 #endif
         Raylib.SetTargetFPS(60);
 
@@ -46,6 +46,6 @@ public class Game(IArcadianGame? game, GameDataManager dataManager)
 
     protected virtual void LoadContent()
     {
-        _gameData?.Initialize();
+        // _gameData?.Initialize();
     }
 }

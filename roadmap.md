@@ -7,6 +7,7 @@
 
 - Game runtime object initialization (This is what will run the game loop and so on).
 - Game as a interface (Alowing to use it inside the future editor).
+- Game profiles (project settings)
 - Raylib integration (Window, rendering and input gathering).
 - Basic game loop.
 - ECS integration with Friflo.
