@@ -11,4 +11,8 @@
     <ProjectReference Include="..\raylib-cs\Raylib-cs.Native\Raylib-cs.Native.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Friflo.Engine.ECS" Version="3.5.0" />
+  </ItemGroup>
+
 </Project>

@@ -8,7 +8,12 @@ public interface IArcadianGame
     /// <summary>
     /// Called once, when the executable for the game starts and initializes.
     /// </summary>
-    public void Initialize() { }
+    public void Initialize()
+    {
+        this.LoadContent();
+    }
+
+    public void LoadContent() { }
 
     /// <summary>
     /// Called after each update.
@@ -18,7 +23,7 @@ public interface IArcadianGame
     /// <summary>
     /// Called before the draw step.
     /// </summary>
-    public void OnDraw() {}
+    public void OnDraw() { }
 
     /// <summary>
     /// Called after each draw.
