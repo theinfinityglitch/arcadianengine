@@ -9,6 +9,11 @@ public struct Vector2i(int x, int y)
         return new(0, 0);
     }
 
+    public static Vector2i One()
+    {
+        return new(1, 1);
+    }
+
     public static Vector2i Left()
     {
         return new(-1, 0);
