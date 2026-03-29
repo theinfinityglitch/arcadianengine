@@ -14,6 +14,8 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
     private readonly IArcadianGame? _game = game;
     private readonly GameDataManager? _gameData = dataManager;
     public readonly EntityStore? world;
+    string title = title;
+    string? formated_title;
 
     public Game(IArcadianGame? game, string title, Vector2i windowSize) : this(game, title, windowSize, new GameDataManager(game))
     {
@@ -27,10 +29,11 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
     public void Run()
     {
 #if DEBUG
-        Raylib.InitWindow(windowSize.x, windowSize.y, $"{title} - [DEBUG]");
+        formated_title = title + " [DEBUG]";
 #else
-        Raylib.InitWindow(windowSize.x, windowSize.y, title);
+        formated_title = title;
 #endif
+        Raylib.InitWindow(windowSize.x, windowSize.y, formated_title);
 
         Raylib.SetTargetFPS(60);
 
@@ -39,11 +42,11 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
 
         while (!Raylib.WindowShouldClose())
         {
-            _game?.OnUpdate();
-
             Raylib.BeginDrawing();
 
-            _game?.OnDraw();
+            Raylib.SetWindowTitle($"{formated_title} - {Raylib.GetFPS()} FPS");
+
+            _game?.OnUpdate();
 
             Raylib.EndDrawing();
         }

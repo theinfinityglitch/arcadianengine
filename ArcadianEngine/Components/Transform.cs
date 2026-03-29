@@ -9,5 +9,7 @@ public struct Transform2D(Vector2 position, Vector2 scale, float rotation) : ICo
     public Vector2 scale = scale;
     public float rotation = rotation;
 
+    public Transform2D() : this(Vector2.Zero, Vector2.One, 0.0f) { }
+
     public Transform2D(Vector2 position) : this(position, Vector2.One, 0.0f) { }
 }
