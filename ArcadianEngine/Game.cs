@@ -2,6 +2,8 @@
 using ArcadianEngine.Data;
 using Raylib_cs;
 using Friflo.Engine.ECS;
+using Friflo.Engine.ECS.Systems;
+using System.Collections.Specialized;
 
 namespace ArcadianEngine;
 
@@ -14,13 +16,19 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
     private readonly IArcadianGame? _game = game;
     private readonly GameDataManager? _gameData = dataManager;
     public readonly EntityStore? world;
-    string title = title;
+    public readonly GameStateMachine? gameStateMachine;
+    public readonly Schedules schedules = new();
+    readonly string title = title;
     string? formated_title;
 
     public Game(IArcadianGame? game, string title, Vector2i windowSize) : this(game, title, windowSize, new GameDataManager(game))
     {
         Instance = this;
         world = new EntityStore();
+        gameStateMachine = new GameStateMachine("GameStateMachine");
+
+        // schedules.Add("Update", new SystemRoot(world));
+        // schedules.Add("Draw", new SystemRoot(world));
     }
 
     /// <summary>
@@ -47,6 +55,8 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
             Raylib.SetWindowTitle($"{formated_title} - {Raylib.GetFPS()} FPS");
 
             _game?.OnUpdate();
+            gameStateMachine?.Update(Raylib.GetFrameTime(), this);
+            gameStateMachine?.Draw(this);
 
             Raylib.EndDrawing();
         }
@@ -57,6 +67,7 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
     protected virtual void Initialize()
     {
         _game?.Initialize();
+        gameStateMachine?.Initialize();
         _game?.LoadContent();
     }
 }
