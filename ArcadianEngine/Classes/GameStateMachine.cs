@@ -6,14 +6,18 @@ public class GameStateMachine(string stateMachineName) : LinearStateMachine(stat
 
     public virtual void AddState(string stateName, GameState state)
     {
-        if (_states.Count == 0)
+        if (_game_states.Count == 0)
         {
             _defaultStateName = stateName;
-            _currentStateName = stateName;
         }
 
         _game_states.Add(stateName, state);
         state.SetOwnerStateMachine(this);
+    }
+
+    public virtual void Initialize(Game cx)
+    {
+        ChangeState(_defaultStateName, cx);
     }
 
     public virtual void ChangeState(string stateName, Game cx)
@@ -25,7 +29,8 @@ public class GameStateMachine(string stateMachineName) : LinearStateMachine(stat
 
         Console.WriteLine($"Set state {_stateMachineName}::{stateName}");
 
-        _game_states[_currentStateName].Exit(cx);
+        if (_currentStateName != "")
+            _game_states[_currentStateName].Exit(cx);
         _currentStateName = stateName;
         _game_states[_currentStateName].Enter(cx);
     }

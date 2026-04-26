@@ -3,7 +3,7 @@ using ArcadianEngine.Data;
 using Raylib_cs;
 using Friflo.Engine.ECS;
 using Friflo.Engine.ECS.Systems;
-using System.Collections.Specialized;
+using ArcadianEngine.Schedules;
 
 namespace ArcadianEngine;
 
@@ -17,7 +17,7 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
     private readonly GameDataManager? _gameData = dataManager;
     public readonly EntityStore? world;
     public readonly GameStateMachine? gameStateMachine;
-    public readonly Schedules schedules = new();
+    private readonly ScheduleOrder schedules = new();
     readonly string title = title;
     string? formated_title;
 
@@ -27,8 +27,8 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
         world = new EntityStore();
         gameStateMachine = new GameStateMachine("GameStateMachine");
 
-        // schedules.Add("Update", new SystemRoot(world));
-        // schedules.Add("Draw", new SystemRoot(world));
+        InsertSchedule<Update>();
+        InsertSchedule<Draw>();
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
         Raylib.SetTargetFPS(60);
 
         this.Initialize();
-        _game?.OnUpdate();
+        _game?.OnUpdate(this);
 
         while (!Raylib.WindowShouldClose())
         {
@@ -54,7 +54,8 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
 
             Raylib.SetWindowTitle($"{formated_title} - {Raylib.GetFPS()} FPS");
 
-            _game?.OnUpdate();
+            _game?.OnUpdate(this);
+            schedules.Run();
             gameStateMachine?.Update(Raylib.GetFrameTime(), this);
             gameStateMachine?.Draw(this);
 
@@ -66,8 +67,18 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
 
     protected virtual void Initialize()
     {
-        _game?.Initialize();
-        gameStateMachine?.Initialize();
-        _game?.LoadContent();
+        _game?.Initialize(this);
+        _game?.LoadContent(this);
+        gameStateMachine?.Initialize(this);
+    }
+
+    public void InsertSchedule<T>() where T : struct, ISchedule
+    {
+        schedules.InsertSchedule<T>(this);
+    }
+
+    public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule
+    {
+        schedules.InsertSystem<T>(system);
     }
 }
