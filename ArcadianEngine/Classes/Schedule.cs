@@ -1,9 +1,3 @@
 namespace ArcadianEngine.Classes;
 
-public interface ISchedule
-{
-    public string GetLabel()
-    {
-        return GetType().Name;
-    }
-}
+public interface ISchedule { }

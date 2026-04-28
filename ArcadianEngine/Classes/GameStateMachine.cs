@@ -1,10 +1,12 @@
 ﻿namespace ArcadianEngine.Classes;
 
-public class GameStateMachine(string stateMachineName) : LinearStateMachine(stateMachineName)
+public class GameStateMachine(string stateMachineName) : StateMachine(stateMachineName)
 {
     protected Dictionary<string, GameState> _game_states = [];
+    protected string _defaultStateName = "";
+    protected string _currentStateName = "";
 
-    public virtual void AddState(string stateName, GameState state)
+    public virtual void AddState(Game cx, string stateName, GameState state)
     {
         if (_game_states.Count == 0)
         {
@@ -12,7 +14,7 @@ public class GameStateMachine(string stateMachineName) : LinearStateMachine(stat
         }
 
         _game_states.Add(stateName, state);
-        state.SetOwnerStateMachine(this);
+        state.SetOwnerStateMachine(cx, this);
     }
 
     public virtual void Initialize(Game cx)

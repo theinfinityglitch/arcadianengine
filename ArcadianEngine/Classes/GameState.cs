@@ -1,7 +1,9 @@
 namespace ArcadianEngine.Classes;
 
-public class GameState : State
+public class GameState
 {
+    protected GameStateMachine? _ownerStateMachine = null;
+
     public virtual void Enter(Game cx) { }
 
     public virtual void OnOwnerSet(Game cx) { }
@@ -13,4 +15,10 @@ public class GameState : State
     public virtual void Draw(Game cx) { }
 
     public virtual void Exit(Game cx) { }
+
+    public void SetOwnerStateMachine(Game cx, GameStateMachine owner)
+    {
+        this._ownerStateMachine = owner;
+        OnOwnerSet(cx);
+    }
 }

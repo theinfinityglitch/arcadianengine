@@ -72,6 +72,14 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
         gameStateMachine?.Initialize(this);
     }
 
+    // TODO: Move functions bellow to a proper "Context"
+
+    public void InsertGameState<T>() where T : GameState, new()
+    {
+        T state = new();
+        gameStateMachine?.AddState(this, typeof(T).Name, state);
+    }
+
     public void InsertSchedule<T>() where T : struct, ISchedule
     {
         schedules.InsertSchedule<T>(this);

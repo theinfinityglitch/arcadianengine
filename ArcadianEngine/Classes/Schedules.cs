@@ -8,21 +8,18 @@ public class ScheduleOrder
 
     public void InsertSchedule<T>(Game cx) where T : struct, ISchedule
     {
-        var label = new T();
         SystemRoot schedule = new(cx.world);
 
-        if (!inner.ContainsKey(label.GetLabel()))
-            inner.Add(label.GetLabel(), schedule);
+        if (!inner.ContainsKey(typeof(T).Name))
+            inner.Add(typeof(T).Name, schedule);
         else
-            inner[label.GetLabel()] = schedule;
+            inner[typeof(T).Name] = schedule;
     }
 
     public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule
     {
-        var label = new T();
-
-        if (inner.ContainsKey(label.GetLabel()))
-            inner[label.GetLabel()].Add(system);
+        if (inner.ContainsKey(typeof(T).Name))
+            inner[typeof(T).Name].Add(system);
     }
 
     public void Run()
