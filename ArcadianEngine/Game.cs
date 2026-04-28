@@ -85,8 +85,18 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
         schedules.InsertSchedule<T>(this);
     }
 
+    public void RemoveSchedule<T>() where T : struct, ISchedule
+    {
+        schedules.RemoveSchedule<T>(this);
+    }
+
     public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule
     {
         schedules.InsertSystem<T>(system);
+    }
+
+    public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
+    {
+        schedules.RemoveSystem<T>(system);
     }
 }

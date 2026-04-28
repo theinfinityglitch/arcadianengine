@@ -16,10 +16,22 @@ public class ScheduleOrder
             inner[typeof(T).Name] = schedule;
     }
 
+    public void RemoveSchedule<T>(Game cx) where T : struct, ISchedule
+    {
+        if (inner.ContainsKey(typeof(T).Name))
+            inner.Remove(typeof(T).Name);
+    }
+
     public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule
     {
         if (inner.ContainsKey(typeof(T).Name))
             inner[typeof(T).Name].Add(system);
+    }
+
+    public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
+    {
+        if (inner.ContainsKey(typeof(T).Name))
+            inner[typeof(T).Name].Remove(system);
     }
 
     public void Run()
