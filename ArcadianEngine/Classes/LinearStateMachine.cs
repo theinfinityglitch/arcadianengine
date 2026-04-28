@@ -30,9 +30,9 @@ public class LinearStateMachine(string stateMachineName) : StateMachine(stateMac
 
         Console.WriteLine($"Set state {_stateMachineName}::{stateName}");
 
-        _states[_currentStateName].Exit();
+        _states[_currentStateName].OnExit();
         _currentStateName = stateName;
-        _states[_currentStateName].Enter();
+        _states[_currentStateName].OnEnter();
     }
 
     public virtual int HandleInput()
@@ -43,7 +43,7 @@ public class LinearStateMachine(string stateMachineName) : StateMachine(stateMac
             return 1;
         }
 
-        _states[_currentStateName].HandleInput();
+        _states[_currentStateName].OnHandleInput();
 
         return 0;
     }
@@ -56,7 +56,7 @@ public class LinearStateMachine(string stateMachineName) : StateMachine(stateMac
             return 1;
         }
 
-        _states[_currentStateName].Update(deltaTime);
+        _states[_currentStateName].OnUpdate(deltaTime);
 
         return 0;
     }
@@ -69,7 +69,7 @@ public class LinearStateMachine(string stateMachineName) : StateMachine(stateMac
             return 1;
         }
 
-        _states[_currentStateName].Draw();
+        _states[_currentStateName].OnDraw();
 
         return 0;
     }

@@ -32,9 +32,9 @@ public class GameStateMachine(string stateMachineName) : StateMachine(stateMachi
         Console.WriteLine($"Set state {_stateMachineName}::{stateName}");
 
         if (_currentStateName != "")
-            _game_states[_currentStateName].Exit(cx);
+            _game_states[_currentStateName].OnExit(cx);
         _currentStateName = stateName;
-        _game_states[_currentStateName].Enter(cx);
+        _game_states[_currentStateName].OnEnter(cx);
     }
 
     public virtual int HandleInput(Game cx)
@@ -45,7 +45,7 @@ public class GameStateMachine(string stateMachineName) : StateMachine(stateMachi
             return 1;
         }
 
-        _game_states[_currentStateName].HandleInput(cx);
+        _game_states[_currentStateName].OnHandleInput(cx);
 
         return 0;
     }
@@ -58,7 +58,7 @@ public class GameStateMachine(string stateMachineName) : StateMachine(stateMachi
             return 1;
         }
 
-        _game_states[_currentStateName].Update(cx, deltaTime);
+        _game_states[_currentStateName].OnUpdate(cx, deltaTime);
 
         return 0;
     }
@@ -71,7 +71,7 @@ public class GameStateMachine(string stateMachineName) : StateMachine(stateMachi
             return 1;
         }
 
-        _game_states[_currentStateName].Draw(cx);
+        _game_states[_currentStateName].OnDraw(cx);
 
         return 0;
     }

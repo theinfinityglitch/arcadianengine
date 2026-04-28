@@ -67,8 +67,8 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
 
     protected virtual void Initialize()
     {
-        _game?.Initialize(this);
-        _game?.LoadContent(this);
+        _game?.OnInitialize(this);
+        _game?.OnLoadContent(this);
         gameStateMachine?.Initialize(this);
     }
 

@@ -4,17 +4,17 @@ public class State
 {
     protected StateMachine? _ownerStateMachine = null;
 
-    public virtual void Enter() { }
+    public virtual void OnEnter() { }
     
     public virtual void OnOwnerSet() { }
 
-    public virtual void HandleInput() { }
+    public virtual void OnHandleInput() { }
 
-    public virtual void Update(float deltaTime) { }
+    public virtual void OnUpdate(float deltaTime) { }
 
-    public virtual void Draw() { }
+    public virtual void OnDraw() { }
 
-    public virtual void Exit() { }
+    public virtual void OnExit() { }
 
     public void SetOwnerStateMachine(StateMachine owner)
     {

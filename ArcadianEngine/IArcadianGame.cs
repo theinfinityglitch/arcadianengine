@@ -8,9 +8,9 @@ public interface IArcadianGame
     /// <summary>
     /// Called once, when the executable for the game starts and initializes.
     /// </summary>
-    public void Initialize(Game cx) { }
+    public void OnInitialize(Game cx) { }
 
-    public void LoadContent(Game cx) { }
+    public void OnLoadContent(Game cx) { }
 
     /// <summary>
     /// Called after each update.
@@ -25,7 +25,7 @@ public interface IArcadianGame
     /// <summary>
     /// Called after each draw.
     /// </summary>
-    public void AfterDraw(Game cx) { }
+    public void OnAfterDraw(Game cx) { }
 
     /// <summary>
     /// Called before a scene transition.

@@ -4,17 +4,17 @@ public class GameState
 {
     protected GameStateMachine? _ownerStateMachine = null;
 
-    public virtual void Enter(Game cx) { }
+    public virtual void OnEnter(Game cx) { }
 
     public virtual void OnOwnerSet(Game cx) { }
 
-    public virtual void HandleInput(Game cx) { }
+    public virtual void OnHandleInput(Game cx) { }
 
-    public virtual void Update(Game cx, float deltaTime) { }
+    public virtual void OnUpdate(Game cx, float deltaTime) { }
 
-    public virtual void Draw(Game cx) { }
+    public virtual void OnDraw(Game cx) { }
 
-    public virtual void Exit(Game cx) { }
+    public virtual void OnExit(Game cx) { }
 
     public void SetOwnerStateMachine(Game cx, GameStateMachine owner)
     {
