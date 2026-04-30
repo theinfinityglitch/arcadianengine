@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\raylib-cs\Raylib-cs\Raylib-cs.csproj" />
-    <ProjectReference Include="..\raylib-cs\Raylib-cs.Native\Raylib-cs.Native.csproj" />
+    <ProjectReference Include="..\..\raylib-cs\Raylib-cs\Raylib-cs.csproj" />
+    <ProjectReference Include="..\..\raylib-cs\Raylib-cs.Native\Raylib-cs.Native.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,13 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36908.2
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcadianEngine", "ArcadianEngine\ArcadianEngine.csproj", "{299B1613-1D9C-4E99-8BBF-BDBAB53AEEBD}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "raylib-cs", "raylib-cs", "{898A3325-03B8-59B2-DAE4-B1D69D163BAE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raylib-cs", "raylib-cs\Raylib-cs\Raylib-cs.csproj", "{439864C1-AAF2-46E7-82A8-693744940599}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raylib-cs.Native", "raylib-cs\Raylib-cs.Native\Raylib-cs.Native.csproj", "{5EF03099-55A1-4C92-BCB7-FC2D51BA6A57}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcadianEngine", "src\ArcadianEngine\ArcadianEngine.csproj", "{299B1613-1D9C-4E99-8BBF-BDBAB53AEEBD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,9 +54,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{439864C1-AAF2-46E7-82A8-693744940599} = {898A3325-03B8-59B2-DAE4-B1D69D163BAE}
-		{5EF03099-55A1-4C92-BCB7-FC2D51BA6A57} = {898A3325-03B8-59B2-DAE4-B1D69D163BAE}
 	EndGlobalSection
 EndGlobal
