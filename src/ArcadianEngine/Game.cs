@@ -1,6 +1,9 @@
-﻿using ArcadianEngine.Classes;
+﻿using Raylib_cs;
+using rlImGui_cs;
+using ImGuiNET;
+
+using ArcadianEngine.Classes;
 using Friflo.Engine.ECS;
-using Raylib_cs;
 
 namespace ArcadianEngine;
 
@@ -49,21 +52,45 @@ public class Game<G> where G : class, IArcadianGame<G>
 
         this.Initialize();
         game.OnUpdate(context);
+        rlImGui.Setup();
 
         while (!Raylib.WindowShouldClose())
         {
             Raylib.BeginDrawing();
+            rlImGui.Begin();
 
-            Raylib.SetWindowTitle($"{formated_title} - {Raylib.GetFPS()} FPS");
+#if DEBUG
+            if (ImGui.BeginMainMenuBar())
+            {
+                if (ImGui.BeginMenu("File"))
+                {
+                    if (ImGui.MenuItem("Save")) Console.WriteLine("Save pressed");
+                    if (ImGui.MenuItem("Load")) Console.WriteLine("Load pressed");
+
+                    ImGui.EndMenu();
+                }
+
+                string fps_label = $"{Raylib.GetFPS()} FPS";
+                float text_width = ImGui.CalcTextSize(fps_label).X;
+                ImGui.SetCursorPosX(ImGui.GetWindowWidth() - text_width - ImGui.GetStyle().ItemSpacing.X);
+                ImGui.Text(fps_label);
+
+                ImGui.EndMainMenuBar();
+            }
+#endif
+
+            ImGui.ShowDemoWindow();
 
             game.OnUpdate(context);
             schedules.Run();
             gameStateMachine.Update(Raylib.GetFrameTime(), context);
             gameStateMachine.Draw(context);
 
+            rlImGui.End();
             Raylib.EndDrawing();
         }
 
+        rlImGui.Shutdown();
         Raylib.CloseWindow();
     }
 
