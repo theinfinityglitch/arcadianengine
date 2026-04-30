@@ -1,31 +1,38 @@
 ﻿using ArcadianEngine.Classes;
-using ArcadianEngine.Data;
-using Raylib_cs;
 using Friflo.Engine.ECS;
 using Friflo.Engine.ECS.Systems;
-using ArcadianEngine.Schedules;
+using Raylib_cs;
 
 namespace ArcadianEngine;
 
 /// <summary>
 /// A Arcadian Engine project, may it be a app or a game.
 /// </summary>
-public partial class Game(IArcadianGame? game, string title, Vector2i windowSize, GameDataManager dataManager)
+public class Game<G> where G : class, IArcadianGame<G>
 {
-    public static Game? Instance { get; private set; } = null;
-    private readonly IArcadianGame? _game = game;
-    private readonly GameDataManager? _gameData = dataManager;
-    public readonly EntityStore? world;
-    public readonly GameStateMachine? gameStateMachine;
+    private readonly G game;
+    private readonly GameContext<G> context;
+    private readonly EntityStore world = new();
+    private readonly GameStateMachine<G> gameStateMachine = new();
     private readonly ScheduleOrder schedules = new();
-    readonly string title = title;
-    string? formated_title;
 
-    public Game(IArcadianGame? game, string title, Vector2i windowSize) : this(game, title, windowSize, new GameDataManager(game))
+    // TODO: Move to the data manager
+    private readonly string title;
+    private readonly string formated_title;
+    private readonly Vector2i windowSize;
+
+    public Game(G game, string title, Vector2i windowSize) 
     {
-        Instance = this;
-        world = new EntityStore();
-        gameStateMachine = new GameStateMachine("GameStateMachine");
+        this.game = game;
+        this.title = title;
+        this.windowSize = windowSize;
+        this.context = new(this);
+
+#if DEBUG
+        formated_title = title + " [DEBUG]";
+#else
+        formated_title = title;
+#endif
 
         InsertSchedule<Update>();
         InsertSchedule<Draw>();
@@ -36,17 +43,12 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
     /// </summary>
     public void Run()
     {
-#if DEBUG
-        formated_title = title + " [DEBUG]";
-#else
-        formated_title = title;
-#endif
         Raylib.InitWindow(windowSize.x, windowSize.y, formated_title);
 
         Raylib.SetTargetFPS(60);
 
         this.Initialize();
-        _game?.OnUpdate(this);
+        game.OnUpdate(context);
 
         while (!Raylib.WindowShouldClose())
         {
@@ -54,10 +56,10 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
 
             Raylib.SetWindowTitle($"{formated_title} - {Raylib.GetFPS()} FPS");
 
-            _game?.OnUpdate(this);
+            game.OnUpdate(context);
             schedules.Run();
-            gameStateMachine?.Update(Raylib.GetFrameTime(), this);
-            gameStateMachine?.Draw(this);
+            gameStateMachine.Update(Raylib.GetFrameTime(), context);
+            gameStateMachine.Draw(context);
 
             Raylib.EndDrawing();
         }
@@ -67,27 +69,25 @@ public partial class Game(IArcadianGame? game, string title, Vector2i windowSize
 
     protected virtual void Initialize()
     {
-        _game?.OnInitialize(this);
-        _game?.OnLoadContent(this);
-        gameStateMachine?.Initialize(this);
+        game.OnInitialize(context);
+        game.OnLoadContent(context);
+        gameStateMachine.Initialize(context);
     }
 
-    // TODO: Move functions bellow to a proper "Context"
-
-    public void InsertGameState<T>() where T : GameState, new()
+    public void InsertGameState<T>() where T : GameState<G>, new()
     {
         T state = new();
-        gameStateMachine?.AddState(this, typeof(T).Name, state);
+        gameStateMachine.AddState(typeof(T).Name, state, context);
     }
 
     public void InsertSchedule<T>() where T : struct, ISchedule
     {
-        schedules.InsertSchedule<T>(this);
+        schedules.InsertSchedule<T>(world);
     }
 
     public void RemoveSchedule<T>() where T : struct, ISchedule
     {
-        schedules.RemoveSchedule<T>(this);
+        schedules.RemoveSchedule<T>();
     }
 
     public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule

@@ -1,12 +1,14 @@
 ﻿namespace ArcadianEngine.Classes;
 
-public class GameStateMachine(string stateMachineName) : StateMachine(stateMachineName)
+public class GameStateMachine<G> : StateMachine where G : class, IArcadianGame<G>
 {
-    protected Dictionary<string, GameState> _game_states = [];
+    protected Dictionary<string, GameState<G>> _game_states = [];
     protected string _defaultStateName = "";
     protected string _currentStateName = "";
 
-    public virtual void AddState(Game cx, string stateName, GameState state)
+    public GameStateMachine() : base("GameStateMachine") { }
+
+    public virtual void AddState(string stateName, GameState<G> state, GameContext<G> cx)
     {
         if (_game_states.Count == 0)
         {
@@ -14,15 +16,15 @@ public class GameStateMachine(string stateMachineName) : StateMachine(stateMachi
         }
 
         _game_states.Add(stateName, state);
-        state.SetOwnerStateMachine(cx, this);
+        state.SetOwnerStateMachine(this, cx);
     }
 
-    public virtual void Initialize(Game cx)
+    public virtual void Initialize(GameContext<G> cx)
     {
         ChangeState(_defaultStateName, cx);
     }
 
-    public virtual void ChangeState(string stateName, Game cx)
+    public virtual void ChangeState(string stateName, GameContext<G> cx)
     {
         if (stateName == _currentStateName || stateName == "" || !_game_states.ContainsKey(stateName))
         {
@@ -37,7 +39,7 @@ public class GameStateMachine(string stateMachineName) : StateMachine(stateMachi
         _game_states[_currentStateName].OnEnter(cx);
     }
 
-    public virtual int HandleInput(Game cx)
+    public virtual int HandleInput(GameContext<G> cx)
     {
         if (_game_states.Count == 0)
         {
@@ -50,7 +52,7 @@ public class GameStateMachine(string stateMachineName) : StateMachine(stateMachi
         return 0;
     }
 
-    public virtual int Update(float deltaTime, Game cx)
+    public virtual int Update(float deltaTime, GameContext<G> cx)
     {
         if (_game_states.Count == 0)
         {
@@ -58,12 +60,12 @@ public class GameStateMachine(string stateMachineName) : StateMachine(stateMachi
             return 1;
         }
 
-        _game_states[_currentStateName].OnUpdate(cx, deltaTime);
+        _game_states[_currentStateName].OnUpdate(deltaTime, cx);
 
         return 0;
     }
 
-    public virtual int Draw(Game cx)
+    public virtual int Draw(GameContext<G> cx)
     {
         if (_game_states.Count == 0)
         {

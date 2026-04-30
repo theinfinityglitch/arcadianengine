@@ -1,22 +1,22 @@
 namespace ArcadianEngine.Classes;
 
-public class GameState
+public class GameState<G> where G : class, IArcadianGame<G>
 {
-    protected GameStateMachine? _ownerStateMachine = null;
+    protected GameStateMachine<G>? _ownerStateMachine = null;
 
-    public virtual void OnEnter(Game cx) { }
+    public virtual void OnEnter(GameContext<G> cx) { }
 
-    public virtual void OnOwnerSet(Game cx) { }
+    public virtual void OnOwnerSet(GameContext<G> cx) { }
 
-    public virtual void OnHandleInput(Game cx) { }
+    public virtual void OnHandleInput(GameContext<G> cx) { }
 
-    public virtual void OnUpdate(Game cx, float deltaTime) { }
+    public virtual void OnUpdate(float deltaTime, GameContext<G> cx) { }
 
-    public virtual void OnDraw(Game cx) { }
+    public virtual void OnDraw(GameContext<G> cx) { }
 
-    public virtual void OnExit(Game cx) { }
+    public virtual void OnExit(GameContext<G> cx) { }
 
-    public void SetOwnerStateMachine(Game cx, GameStateMachine owner)
+    public void SetOwnerStateMachine(GameStateMachine<G> owner, GameContext<G> cx)
     {
         this._ownerStateMachine = owner;
         OnOwnerSet(cx);

@@ -1,3 +1,4 @@
+using Friflo.Engine.ECS;
 using Friflo.Engine.ECS.Systems;
 
 namespace ArcadianEngine.Classes;
@@ -6,9 +7,9 @@ public class ScheduleOrder
 {
     private readonly Dictionary<string, SystemRoot> inner = [];
 
-    public void InsertSchedule<T>(Game cx) where T : struct, ISchedule
+    public void InsertSchedule<T>(EntityStore world) where T : struct, ISchedule
     {
-        SystemRoot schedule = new(cx.world);
+        SystemRoot schedule = new(world);
 
         if (!inner.ContainsKey(typeof(T).Name))
             inner.Add(typeof(T).Name, schedule);
@@ -16,7 +17,7 @@ public class ScheduleOrder
             inner[typeof(T).Name] = schedule;
     }
 
-    public void RemoveSchedule<T>(Game cx) where T : struct, ISchedule
+    public void RemoveSchedule<T>() where T : struct, ISchedule
     {
         if (inner.ContainsKey(typeof(T).Name))
             inner.Remove(typeof(T).Name);
