@@ -1,6 +1,5 @@
 ﻿using ArcadianEngine.Classes;
 using Friflo.Engine.ECS;
-using Friflo.Engine.ECS.Systems;
 using Raylib_cs;
 
 namespace ArcadianEngine;
@@ -12,9 +11,10 @@ public class Game<G> where G : class, IArcadianGame<G>
 {
     private readonly G game;
     private readonly GameContext<G> context;
-    private readonly EntityStore world = new();
-    private readonly GameStateMachine<G> gameStateMachine = new();
-    private readonly ScheduleOrder schedules = new();
+
+    public readonly EntityStore world = new();
+    public readonly GameStateMachine<G> gameStateMachine = new();
+    public readonly ScheduleOrder schedules = new();
 
     // TODO: Move to the data manager
     private readonly string title;
@@ -26,7 +26,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         this.game = game;
         this.title = title;
         this.windowSize = windowSize;
-        this.context = new(this);
+        context = new(this);
 
 #if DEBUG
         formated_title = title + " [DEBUG]";
@@ -34,8 +34,8 @@ public class Game<G> where G : class, IArcadianGame<G>
         formated_title = title;
 #endif
 
-        InsertSchedule<Update>();
-        InsertSchedule<Draw>();
+        context.InsertSchedule<Update>();
+        context.InsertSchedule<Draw>();
     }
 
     /// <summary>
@@ -72,31 +72,5 @@ public class Game<G> where G : class, IArcadianGame<G>
         game.OnInitialize(context);
         game.OnLoadContent(context);
         gameStateMachine.Initialize(context);
-    }
-
-    public void InsertGameState<T>() where T : GameState<G>, new()
-    {
-        T state = new();
-        gameStateMachine.AddState(typeof(T).Name, state, context);
-    }
-
-    public void InsertSchedule<T>() where T : struct, ISchedule
-    {
-        schedules.InsertSchedule<T>(world);
-    }
-
-    public void RemoveSchedule<T>() where T : struct, ISchedule
-    {
-        schedules.RemoveSchedule<T>();
-    }
-
-    public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule
-    {
-        schedules.InsertSystem<T>(system);
-    }
-
-    public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
-    {
-        schedules.RemoveSystem<T>(system);
     }
 }

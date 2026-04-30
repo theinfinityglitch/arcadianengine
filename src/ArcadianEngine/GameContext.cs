@@ -3,32 +3,33 @@ using Friflo.Engine.ECS.Systems;
 
 namespace ArcadianEngine;
 
-public class GameContext<G>(Game<G> app) where G : class, IArcadianGame<G>
+public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
 {
-    public Game<G> App { get; private set; } = app;
+    public Game<G> Game { get; private set; } = game;
 
     public void InsertGameState<T>() where T : GameState<G>, new()
     {
-        App.InsertGameState<T>();
+        T state = new();
+        Game.gameStateMachine.AddState(typeof(T).Name, state, this);
     }
 
     public void InsertSchedule<T>() where T : struct, ISchedule
     {
-        App.InsertSchedule<T>();
+        Game.schedules.InsertSchedule<T>(Game.world);
     }
 
     public void RemoveSchedule<T>() where T : struct, ISchedule
     {
-        App.RemoveSchedule<T>();
+        Game.schedules.RemoveSchedule<T>();
     }
 
     public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule
     {
-        App.InsertSystem<T>(system);
+        Game.schedules.InsertSystem<T>(system);
     }
 
     public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
     {
-        App.RemoveSystem<T>(system);
+        Game.schedules.RemoveSystem<T>(system);
     }
 }
