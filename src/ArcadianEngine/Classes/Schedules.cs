@@ -23,10 +23,12 @@ public class ScheduleOrder
             inner.Remove(typeof(T).Name);
     }
 
-    public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule
+    public SystemType InsertSystem<Schedule, SystemType>(SystemType system) where Schedule : struct, ISchedule where SystemType : BaseSystem
     {
-        if (inner.ContainsKey(typeof(T).Name))
-            inner[typeof(T).Name].Add(system);
+        if (inner.ContainsKey(typeof(Schedule).Name))
+            inner[typeof(Schedule).Name].Add(system);
+
+        return system;
     }
 
     public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule

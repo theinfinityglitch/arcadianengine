@@ -23,9 +23,9 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
         Game.schedules.RemoveSchedule<T>();
     }
 
-    public void InsertSystem<T>(BaseSystem system) where T : struct, ISchedule
+    public SystemType InsertSystem<Schedule, SystemType>(SystemType system) where Schedule : struct, ISchedule where SystemType : BaseSystem
     {
-        Game.schedules.InsertSystem<T>(system);
+        return Game.schedules.InsertSystem<Schedule, SystemType>(system);
     }
 
     public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
