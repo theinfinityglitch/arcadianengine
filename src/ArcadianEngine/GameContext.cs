@@ -32,4 +32,10 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
     {
         Game.schedules.RemoveSystem<T>(system);
     }
+
+    public void InsertResource<TRes>(TRes resource) where TRes : class
+        => Game.resource_container.InsertResource(resource);
+
+    public TRes GetResource<TRes>() where TRes : class
+        => Game.resource_container.GetResource<TRes>();
 }

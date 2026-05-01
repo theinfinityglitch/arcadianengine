@@ -15,6 +15,7 @@ public class Game<G> where G : class, IArcadianGame<G>
     private readonly G game;
     private readonly GameContext<G> context;
 
+    public readonly ResourceContainer resource_container = new();
     public readonly EntityStore world = new();
     public readonly GameStateMachine<G> gameStateMachine = new();
     public readonly ScheduleOrder schedules = new();
@@ -24,7 +25,7 @@ public class Game<G> where G : class, IArcadianGame<G>
     private readonly string formated_title;
     private readonly Vector2i windowSize;
 
-    public Game(G game, string title, Vector2i windowSize) 
+    public Game(G game, string title, Vector2i windowSize)
     {
         this.game = game;
         this.title = title;

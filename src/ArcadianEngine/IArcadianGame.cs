@@ -8,7 +8,7 @@ public interface IArcadianGame<Self> where Self : class, IArcadianGame<Self>
     /// <summary>
     /// Called once, when the executable for the game starts and initializes.
     /// </summary>
-    public void OnInitialize(GameContext<Self> cx){ }
+    public void OnInitialize(GameContext<Self> cx) { }
 
     public void OnLoadContent(GameContext<Self> cx) { }
 
