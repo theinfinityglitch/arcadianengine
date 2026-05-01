@@ -1,4 +1,4 @@
-﻿using ArcadianEngine.Classes;
+﻿using ArcadianEngine.Core;
 using Friflo.Engine.ECS.Systems;
 
 namespace ArcadianEngine;

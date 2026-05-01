@@ -1,7 +1,7 @@
 using Friflo.Engine.ECS;
 using Friflo.Engine.ECS.Systems;
 
-namespace ArcadianEngine.Classes;
+namespace ArcadianEngine.Core;
 
 public class ScheduleOrder
 {

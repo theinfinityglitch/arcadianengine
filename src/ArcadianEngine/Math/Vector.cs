@@ -1,4 +1,4 @@
-﻿namespace ArcadianEngine.Classes;
+﻿namespace ArcadianEngine.Math;
 
 public struct Vector2i(int x, int y)
 {

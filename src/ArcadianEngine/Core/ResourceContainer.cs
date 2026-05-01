@@ -1,6 +1,4 @@
-using System;
-
-namespace ArcadianEngine;
+namespace ArcadianEngine.Core;
 
 public class ResourceContainer
 {

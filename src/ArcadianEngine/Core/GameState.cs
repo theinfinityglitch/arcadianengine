@@ -1,4 +1,6 @@
-namespace ArcadianEngine.Classes;
+using ArcadianEngine.StateMachines;
+
+namespace ArcadianEngine.Core;
 
 public class GameState<G> where G : class, IArcadianGame<G>
 {

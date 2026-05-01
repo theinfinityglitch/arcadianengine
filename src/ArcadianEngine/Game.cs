@@ -1,9 +1,11 @@
 ﻿using Raylib_cs;
 using rlImGui_cs;
 using ImGuiNET;
-
-using ArcadianEngine.Classes;
 using Friflo.Engine.ECS;
+
+using ArcadianEngine.Core;
+using ArcadianEngine.StateMachines;
+using ArcadianEngine.Math;
 
 namespace ArcadianEngine;
 

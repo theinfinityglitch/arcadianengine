@@ -1,11 +1,11 @@
-﻿namespace ArcadianEngine.Classes;
+﻿namespace ArcadianEngine.Core;
 
 public class State
 {
     protected StateMachine? _ownerStateMachine = null;
 
     public virtual void OnEnter() { }
-    
+
     public virtual void OnOwnerSet() { }
 
     public virtual void OnHandleInput() { }

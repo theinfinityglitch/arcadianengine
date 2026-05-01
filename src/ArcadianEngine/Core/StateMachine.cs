@@ -1,4 +1,4 @@
-﻿namespace ArcadianEngine.Classes;
+﻿namespace ArcadianEngine.Core;
 
 public class StateMachine(string stateMachineName)
 {
