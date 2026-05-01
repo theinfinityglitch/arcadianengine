@@ -53,48 +53,55 @@ public class Game<G> where G : class, IArcadianGame<G>
 
         Raylib.SetTargetFPS(60);
 
-        this.Initialize();
-        game.OnUpdate(context);
+        Initialize();
         rlImGui.Setup();
+
+        // Update the game once at start
+        Update();
 
         while (!Raylib.WindowShouldClose())
         {
-            Raylib.BeginDrawing();
-            rlImGui.Begin();
-
-#if DEBUG
-            if (ImGui.BeginMainMenuBar())
-            {
-                if (ImGui.BeginMenu("File"))
-                {
-                    if (ImGui.MenuItem("Save")) Console.WriteLine("Save pressed");
-                    if (ImGui.MenuItem("Load")) Console.WriteLine("Load pressed");
-
-                    ImGui.EndMenu();
-                }
-
-                string fps_label = $"{Raylib.GetFPS()} FPS";
-                float text_width = ImGui.CalcTextSize(fps_label).X;
-                ImGui.SetCursorPosX(ImGui.GetWindowWidth() - text_width - ImGui.GetStyle().ItemSpacing.X);
-                ImGui.Text(fps_label);
-
-                ImGui.EndMainMenuBar();
-            }
-#endif
-
-            ImGui.ShowDemoWindow();
-
-            game.OnUpdate(context);
-            context.GetResource<MainScheduleOrder<G>>().Run();
-            gameStateMachine.Update(Raylib.GetFrameTime());
-            gameStateMachine.Draw();
-
-            rlImGui.End();
-            Raylib.EndDrawing();
+            Update();
         }
 
         rlImGui.Shutdown();
         Raylib.CloseWindow();
+    }
+
+    protected virtual void Update()
+    {
+        Raylib.BeginDrawing();
+        rlImGui.Begin();
+
+#if DEBUG
+        if (ImGui.BeginMainMenuBar())
+        {
+            if (ImGui.BeginMenu("File"))
+            {
+                if (ImGui.MenuItem("Save")) Console.WriteLine("Save pressed");
+                if (ImGui.MenuItem("Load")) Console.WriteLine("Load pressed");
+
+                ImGui.EndMenu();
+            }
+
+            string fps_label = $"{Raylib.GetFPS()} FPS";
+            float text_width = ImGui.CalcTextSize(fps_label).X;
+            ImGui.SetCursorPosX(ImGui.GetWindowWidth() - text_width - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.Text(fps_label);
+
+            ImGui.EndMainMenuBar();
+        }
+#endif
+
+        ImGui.ShowDemoWindow();
+
+        game.OnUpdate(context);
+        context.GetResource<MainScheduleOrder<G>>().Run();
+        gameStateMachine.Update(Raylib.GetFrameTime());
+        gameStateMachine.Draw();
+
+        rlImGui.End();
+        Raylib.EndDrawing();
     }
 
     protected virtual void Initialize()
