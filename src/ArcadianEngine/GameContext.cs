@@ -1,6 +1,7 @@
-﻿using ArcadianEngine.Core;
+﻿using Friflo.Engine.ECS.Systems;
+
+using ArcadianEngine.Core;
 using ArcadianEngine.Resources;
-using Friflo.Engine.ECS.Systems;
 
 namespace ArcadianEngine;
 
@@ -28,4 +29,13 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
 
     public TRes GetResource<TRes>() where TRes : class
         => Game.resource_container.GetResource<TRes>();
+
+    public TRes GetResource<TRes>(Action<TRes> actions) where TRes : class
+    {
+        TRes resource = GetResource<TRes>();
+
+        actions(resource);
+
+        return resource;
+    }
 }
