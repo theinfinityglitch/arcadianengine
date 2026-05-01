@@ -1,13 +1,15 @@
 ﻿namespace ArcadianEngine.Core;
 
-public class StateMachine(string stateMachineName)
+public class StateMachine<G>(string stateMachineName, GameContext<G> cx) where G : class, IArcadianGame<G>
 {
-    protected string _stateMachineName = stateMachineName;
-    protected Dictionary<string, State> _states = [];
+    public readonly string stateMachineName = stateMachineName;
 
-    public virtual void AddState(string stateName, State state)
+    protected Dictionary<string, State<G>> _states = [];
+    protected GameContext<G> context = cx;
+
+    public virtual void AddState(string stateName, State<G> state)
     {
         _states.Add(stateName, state);
-        state.SetOwnerStateMachine(this);
+        state.SetOwnerStateMachine(this, context);
     }
 }

@@ -19,7 +19,7 @@ public class Game<G> where G : class, IArcadianGame<G>
 
     public readonly ResourceContainer resource_container = new();
     public readonly EntityStore world = new();
-    public readonly GameStateMachine<G> gameStateMachine = new();
+    public readonly LinearStateMachine<G> gameStateMachine;
     public readonly ScheduleOrder schedules = new();
 
     // TODO: Move to the data manager
@@ -33,6 +33,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         this.title = title;
         this.windowSize = windowSize;
         context = new(this);
+        gameStateMachine = new("GameStateMachine", context);
 
 #if DEBUG
         formated_title = title + " [DEBUG]";
@@ -86,8 +87,8 @@ public class Game<G> where G : class, IArcadianGame<G>
 
             game.OnUpdate(context);
             schedules.Run();
-            gameStateMachine.Update(Raylib.GetFrameTime(), context);
-            gameStateMachine.Draw(context);
+            gameStateMachine.Update(Raylib.GetFrameTime());
+            gameStateMachine.Draw();
 
             rlImGui.End();
             Raylib.EndDrawing();
@@ -101,6 +102,6 @@ public class Game<G> where G : class, IArcadianGame<G>
     {
         game.OnInitialize(context);
         game.OnLoadContent(context);
-        gameStateMachine.Initialize(context);
+        gameStateMachine.Initialize();
     }
 }

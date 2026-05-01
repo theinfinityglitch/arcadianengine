@@ -7,10 +7,9 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
 {
     public Game<G> Game { get; private set; } = game;
 
-    public void InsertGameState<T>() where T : GameState<G>, new()
+    public void InsertGameState<T>(T state) where T : State<G>, new()
     {
-        T state = new();
-        Game.gameStateMachine.AddState(typeof(T).Name, state, this);
+        Game.gameStateMachine.AddState(state);
     }
 
     public void InsertSchedule<T>() where T : struct, ISchedule

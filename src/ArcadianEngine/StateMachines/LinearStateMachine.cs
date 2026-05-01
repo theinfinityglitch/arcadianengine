@@ -2,20 +2,22 @@ using ArcadianEngine.Core;
 
 namespace ArcadianEngine.StateMachines;
 
-public class LinearStateMachine(string stateMachineName) : StateMachine(stateMachineName)
+public class LinearStateMachine<G>(string stateMachineName, GameContext<G> cx) : StateMachine<G>(stateMachineName, cx) where G : class, IArcadianGame<G>
 {
     protected string _defaultStateName = "";
     protected string _currentStateName = "";
 
-    public override void AddState(string stateName, State state)
+    public virtual void AddState<T>(T state) where T : State<G>
     {
+        string stateName = typeof(T).Name;
+
         if (_states.Count == 0)
         {
             _defaultStateName = stateName;
-            _currentStateName = stateName;
         }
 
-        base.AddState(stateName, state);
+        _states.Add(stateName, state);
+        state.SetOwnerStateMachine(this, context);
     }
 
     public virtual void Initialize()
@@ -23,29 +25,30 @@ public class LinearStateMachine(string stateMachineName) : StateMachine(stateMac
         ChangeState(_defaultStateName);
     }
 
-    public void ChangeState(string stateName)
+    public virtual void ChangeState(string stateName)
     {
         if (stateName == _currentStateName || stateName == "" || !_states.ContainsKey(stateName))
         {
             return;
         }
 
-        Console.WriteLine($"Set state {_stateMachineName}::{stateName}");
+        Console.WriteLine($"Set state {stateMachineName}::{stateName}");
 
-        _states[_currentStateName].OnExit();
+        if (_currentStateName != "")
+            _states[_currentStateName].OnExit(context);
         _currentStateName = stateName;
-        _states[_currentStateName].OnEnter();
+        _states[_currentStateName].OnEnter(context);
     }
 
     public virtual int HandleInput()
     {
         if (_states.Count == 0)
         {
-            Console.WriteLine($"No states found for {_stateMachineName}.");
+            Console.WriteLine($"No states found for {stateMachineName}.");
             return 1;
         }
 
-        _states[_currentStateName].OnHandleInput();
+        _states[_currentStateName].OnHandleInput(context);
 
         return 0;
     }
@@ -54,11 +57,11 @@ public class LinearStateMachine(string stateMachineName) : StateMachine(stateMac
     {
         if (_states.Count == 0)
         {
-            Console.WriteLine($"No states found for {_stateMachineName}.");
+            Console.WriteLine($"No states found for {stateMachineName}.");
             return 1;
         }
 
-        _states[_currentStateName].OnUpdate(deltaTime);
+        _states[_currentStateName].OnUpdate(deltaTime, context);
 
         return 0;
     }
@@ -67,11 +70,11 @@ public class LinearStateMachine(string stateMachineName) : StateMachine(stateMac
     {
         if (_states.Count == 0)
         {
-            Console.WriteLine($"No states found for {_stateMachineName}.");
+            Console.WriteLine($"No states found for {stateMachineName}.");
             return 1;
         }
 
-        _states[_currentStateName].OnDraw();
+        _states[_currentStateName].OnDraw(context);
 
         return 0;
     }
