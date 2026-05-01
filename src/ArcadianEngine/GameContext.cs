@@ -9,6 +9,11 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
 {
     public Game<G> Game { get; private set; } = game;
 
+    public void Quit()
+    {
+        Game.shouldClose = true;
+    }
+
     public void InsertGameState<T>(T state) where T : State<G>, new()
     {
         Game.gameStateMachine.AddState(state);

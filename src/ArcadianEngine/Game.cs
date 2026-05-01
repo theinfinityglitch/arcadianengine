@@ -21,6 +21,7 @@ public class Game<G> where G : class, IArcadianGame<G>
     public readonly ResourceContainer resource_container = new();
     public readonly EntityStore world = new();
     public readonly LinearStateMachine<G> gameStateMachine;
+    public bool shouldClose = false;
 
     // TODO: Move to the data manager
     private readonly string title;
@@ -55,11 +56,12 @@ public class Game<G> where G : class, IArcadianGame<G>
 
         Initialize();
         rlImGui.Setup();
+        ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
 
         // Update the game once at start
         Update();
 
-        while (!Raylib.WindowShouldClose())
+        while (!shouldClose)
         {
             Update();
         }
@@ -68,18 +70,28 @@ public class Game<G> where G : class, IArcadianGame<G>
         Raylib.CloseWindow();
     }
 
+    protected virtual void Initialize()
+    {
+        game.OnInitialize(context);
+        game.OnLoadContent(context);
+        gameStateMachine.Initialize();
+    }
+
     protected virtual void Update()
     {
         Raylib.BeginDrawing();
         rlImGui.Begin();
 
+        // Setup the ImGui dockspace
+        ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
+        ImGui.DockSpaceOverViewport(0, ImGui.GetMainViewport(), dockspaceFlags);
+
 #if DEBUG
         if (ImGui.BeginMainMenuBar())
         {
-            if (ImGui.BeginMenu("File"))
+            if (ImGui.BeginMenu("Game"))
             {
-                if (ImGui.MenuItem("Save")) Console.WriteLine("Save pressed");
-                if (ImGui.MenuItem("Load")) Console.WriteLine("Load pressed");
+                if (ImGui.MenuItem("Quit")) context.Quit();
 
                 ImGui.EndMenu();
             }
@@ -93,21 +105,14 @@ public class Game<G> where G : class, IArcadianGame<G>
         }
 #endif
 
-        ImGui.ShowDemoWindow();
-
         game.OnUpdate(context);
-        context.GetResource<MainScheduleOrder<G>>().Run();
         gameStateMachine.Update(Raylib.GetFrameTime());
+        context.GetResource<MainScheduleOrder<G>>().Run();
         gameStateMachine.Draw();
 
         rlImGui.End();
         Raylib.EndDrawing();
-    }
 
-    protected virtual void Initialize()
-    {
-        game.OnInitialize(context);
-        game.OnLoadContent(context);
-        gameStateMachine.Initialize();
+        if (Raylib.WindowShouldClose()) context.Quit();
     }
 }
