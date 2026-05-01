@@ -4,8 +4,9 @@ using ImGuiNET;
 using Friflo.Engine.ECS;
 
 using ArcadianEngine.Core;
-using ArcadianEngine.StateMachines;
 using ArcadianEngine.Math;
+using ArcadianEngine.Resources;
+using ArcadianEngine.StateMachines;
 
 namespace ArcadianEngine;
 
@@ -20,7 +21,6 @@ public class Game<G> where G : class, IArcadianGame<G>
     public readonly ResourceContainer resource_container = new();
     public readonly EntityStore world = new();
     public readonly LinearStateMachine<G> gameStateMachine;
-    public readonly ScheduleOrder schedules = new();
 
     // TODO: Move to the data manager
     private readonly string title;
@@ -41,8 +41,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         formated_title = title;
 #endif
 
-        context.InsertSchedule<Update>();
-        context.InsertSchedule<Draw>();
+        context.InsertResource(new MainScheduleOrder<G>(context));
     }
 
     /// <summary>
@@ -86,7 +85,7 @@ public class Game<G> where G : class, IArcadianGame<G>
             ImGui.ShowDemoWindow();
 
             game.OnUpdate(context);
-            schedules.Run();
+            context.GetResource<MainScheduleOrder<G>>().Run();
             gameStateMachine.Update(Raylib.GetFrameTime());
             gameStateMachine.Draw();
 

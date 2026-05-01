@@ -1,4 +1,5 @@
 ﻿using ArcadianEngine.Core;
+using ArcadianEngine.Resources;
 using Friflo.Engine.ECS.Systems;
 
 namespace ArcadianEngine;
@@ -12,24 +13,14 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
         Game.gameStateMachine.AddState(state);
     }
 
-    public void InsertSchedule<T>() where T : struct, ISchedule
-    {
-        Game.schedules.InsertSchedule<T>(Game.world);
-    }
-
-    public void RemoveSchedule<T>() where T : struct, ISchedule
-    {
-        Game.schedules.RemoveSchedule<T>();
-    }
-
     public SystemType InsertSystem<Schedule, SystemType>(SystemType system) where Schedule : struct, ISchedule where SystemType : BaseSystem
     {
-        return Game.schedules.InsertSystem<Schedule, SystemType>(system);
+        return GetResource<MainScheduleOrder<G>>().InsertSystem<Schedule, SystemType>(system);
     }
 
     public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
     {
-        Game.schedules.RemoveSystem<T>(system);
+        GetResource<MainScheduleOrder<G>>().RemoveSystem<T>(system);
     }
 
     public void InsertResource<TRes>(TRes resource) where TRes : class
