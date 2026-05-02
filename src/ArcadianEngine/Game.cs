@@ -51,15 +51,13 @@ public class Game<G> where G : class, IArcadianGame<G>
     public void Run()
     {
         Raylib.InitWindow(windowSize.x, windowSize.y, formated_title);
-
         Raylib.SetTargetFPS(60);
 
-        Initialize();
         rlImGui.Setup();
         ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
 
-        // Update the game once at start
-        Update();
+        Initialize();
+        Update(); // Update the game once at start
 
         while (!shouldClose)
         {
@@ -92,6 +90,7 @@ public class Game<G> where G : class, IArcadianGame<G>
             if (ImGui.BeginMenu("Game"))
             {
                 if (ImGui.MenuItem("Quit")) context.Quit();
+                ImGui.SetItemTooltip("Stops the game loop and clear the contexts");
 
                 ImGui.EndMenu();
             }
