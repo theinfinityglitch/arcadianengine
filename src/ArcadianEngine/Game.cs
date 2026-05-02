@@ -1,4 +1,6 @@
-﻿using Raylib_cs;
+﻿using System.Reflection;
+
+using Raylib_cs;
 using rlImGui_cs;
 using ImGuiNET;
 using Friflo.Engine.ECS;
@@ -7,6 +9,7 @@ using ArcadianEngine.Core;
 using ArcadianEngine.Math;
 using ArcadianEngine.Resources;
 using ArcadianEngine.StateMachines;
+using System.Runtime.InteropServices;
 
 namespace ArcadianEngine;
 
@@ -53,7 +56,13 @@ public class Game<G> where G : class, IArcadianGame<G>
         Raylib.InitWindow(windowSize.x, windowSize.y, formated_title);
         Raylib.SetTargetFPS(60);
 
+        float dpiScale = Raylib.GetWindowScaleDPI().X;
+
+        // Setup ImGui, load the engine default font (Roboto) and enable docking
         rlImGui.Setup();
+        ImGui.GetIO().Fonts.Clear();
+        ImGui.GetStyle().ScaleAllSizes(dpiScale);
+        LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
         ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
 
         Initialize();
@@ -66,6 +75,34 @@ public class Game<G> where G : class, IArcadianGame<G>
 
         rlImGui.Shutdown();
         Raylib.CloseWindow();
+    }
+
+    protected void LoadEmbeddedFont(string resourceName, float fontSize)
+    {
+        // 1. Get the current assembly
+        var assembly = Assembly.GetExecutingAssembly();
+
+        // 2. Open the resource stream
+        // resourceName is usually "YourNamespace.YourFolder.FontFile.ttf"
+        using Stream? stream = assembly.GetManifestResourceStream(resourceName) ?? throw new Exception($"Resource {resourceName} not found.");
+
+        // 3. Read stream into a byte array
+        byte[] buffer = new byte[stream.Length];
+        stream.Read(buffer, 0, buffer.Length);
+
+        // 4. Pass the data to ImGui
+        // We use 'fixed' to get a pointer to the managed byte array
+        GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+        try
+        {
+            IntPtr ptr = handle.AddrOfPinnedObject();
+            ImGui.GetIO().Fonts.AddFontFromMemoryTTF(ptr, buffer.Length, fontSize);
+            rlImGui.ReloadFonts();
+        }
+        finally
+        {
+            handle.Free();
+        }
     }
 
     protected virtual void Initialize()
@@ -91,6 +128,14 @@ public class Game<G> where G : class, IArcadianGame<G>
             {
                 if (ImGui.MenuItem("Quit")) context.Quit();
                 ImGui.SetItemTooltip("Stops the game loop and clear the contexts");
+
+                ImGui.EndMenu();
+            }
+
+            if (ImGui.BeginMenu("Window"))
+            {
+                if (ImGui.MenuItem("Toggle borderless")) context.TogleBorderlessWindow();
+                ImGui.SetItemTooltip("Resizes window to match monitor resolution or make it floating");
 
                 ImGui.EndMenu();
             }

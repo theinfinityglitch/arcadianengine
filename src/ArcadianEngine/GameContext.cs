@@ -1,4 +1,5 @@
 ﻿using Friflo.Engine.ECS.Systems;
+using Raylib_cs;
 
 using ArcadianEngine.Core;
 using ArcadianEngine.Resources;
@@ -12,6 +13,14 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
     public void Quit()
     {
         Game.shouldClose = true;
+    }
+
+    public void TogleBorderlessWindow()
+    {
+        Raylib.ToggleBorderlessWindowed();
+
+        if (Raylib.IsWindowState(ConfigFlags.UndecoratedWindow))
+            Raylib.ClearWindowState(ConfigFlags.TopmostWindow);
     }
 
     public void InsertGameState<T>(T state) where T : State<G>, new()
