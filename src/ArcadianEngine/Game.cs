@@ -134,7 +134,7 @@ public class Game<G> where G : class, IArcadianGame<G>
 
             if (ImGui.BeginMenu("Window"))
             {
-                if (ImGui.MenuItem("Toggle borderless")) context.TogleBorderlessWindow();
+                if (ImGui.MenuItem("Toggle borderless", null, context.IsBorderlessWindow())) context.TogleBorderlessWindow();
                 ImGui.SetItemTooltip("Resizes window to match monitor resolution or make it floating");
 
                 ImGui.EndMenu();

@@ -15,11 +15,16 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
         Game.shouldClose = true;
     }
 
+    public bool IsBorderlessWindow()
+    {
+        return Raylib.IsWindowState(ConfigFlags.UndecoratedWindow);
+    }
+
     public void TogleBorderlessWindow()
     {
         Raylib.ToggleBorderlessWindowed();
 
-        if (Raylib.IsWindowState(ConfigFlags.UndecoratedWindow))
+        if (IsBorderlessWindow())
             Raylib.ClearWindowState(ConfigFlags.TopmostWindow);
     }
 
