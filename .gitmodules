@@ -1,0 +1,4 @@
+[submodule "raylib-cs"]
+	path = raylib-cs
+	url = https://github.com/theinfinityglitch/raylib-cs.git
+	branch = v7.0.2-sdl

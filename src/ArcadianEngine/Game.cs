@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 
 using Raylib_cs;
-using rlImGui_cs;
 using ImGuiNET;
 using Friflo.Engine.ECS;
 
@@ -53,17 +52,21 @@ public class Game<G> where G : class, IArcadianGame<G>
     /// </summary>
     public void Run()
     {
+        Raylib.SetConfigFlags(ConfigFlags.HighDpiWindow);
         Raylib.InitWindow(windowSize.x, windowSize.y, formated_title);
         Raylib.SetTargetFPS(60);
 
         float dpiScale = Raylib.GetWindowScaleDPI().X;
 
         // Setup ImGui, load the engine default font (Roboto) and enable docking
-        rlImGui.Setup();
-        ImGui.GetIO().Fonts.Clear();
-        ImGui.GetStyle().ScaleAllSizes(dpiScale);
-        LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
-        ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        ImGuiRaylibBackend.Setup(() =>
+        {
+            ImGuiRaylibBackend.LoadDefaultFont = false;
+            ImGui.GetStyle().ScaleAllSizes(dpiScale);
+            ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+            LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
+        });
+        // ImGui.GetIO().Fonts.Clear();
 
         Initialize();
         Update(); // Update the game once at start
@@ -73,7 +76,7 @@ public class Game<G> where G : class, IArcadianGame<G>
             Update();
         }
 
-        rlImGui.Shutdown();
+        ImGuiRaylibBackend.Shutdown();
         Raylib.CloseWindow();
     }
 
@@ -97,7 +100,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         {
             IntPtr ptr = handle.AddrOfPinnedObject();
             ImGui.GetIO().Fonts.AddFontFromMemoryTTF(ptr, buffer.Length, fontSize);
-            rlImGui.ReloadFonts();
+            ImGuiRaylibBackend.ReloadFonts();
         }
         finally
         {
@@ -115,7 +118,7 @@ public class Game<G> where G : class, IArcadianGame<G>
     protected virtual void Update()
     {
         Raylib.BeginDrawing();
-        rlImGui.Begin();
+        ImGuiRaylibBackend.Begin();
 
         // Setup the ImGui dockspace
         ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
@@ -154,7 +157,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         context.GetResource<MainScheduleOrder<G>>().Run();
         gameStateMachine.Draw();
 
-        rlImGui.End();
+        ImGuiRaylibBackend.End();
         Raylib.EndDrawing();
 
         if (Raylib.WindowShouldClose()) context.Quit();
