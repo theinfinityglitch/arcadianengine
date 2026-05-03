@@ -16,6 +16,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install native dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libsdl2-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxinerama-dev \
+          libxi-dev \
+          libxcursor-dev \
+          libxss-dev \
+          libgl1-mesa-dev \
+          cmake
     - name: Checkout submodules
       run: git submodule update --init --recursive
     - name: Setup .NET
