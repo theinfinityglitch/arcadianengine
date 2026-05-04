@@ -45,6 +45,7 @@ public class Game<G> where G : class, IArcadianGame<G>
 #endif
 
         context.InsertResource(new MainScheduleOrder<G>(context));
+        context.InsertResource(new RenderPipeline(windowSize));
     }
 
     /// <summary>
@@ -117,8 +118,19 @@ public class Game<G> where G : class, IArcadianGame<G>
 
     protected virtual void Update()
     {
+        game.OnUpdate(context);
+        gameStateMachine.Update(Raylib.GetFrameTime());
+        context.GetResource<MainScheduleOrder<G>>().Run();
+        gameStateMachine.Draw();
+
+        var rp = context.GetResource<RenderPipeline>();
+
+        var frame = rp.Flush();
+
         Raylib.BeginDrawing();
         ImGuiRaylibBackend.Begin();
+
+        rp.PresentToScreen(frame);
 
         // Setup the ImGui dockspace
         ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
@@ -152,13 +164,10 @@ public class Game<G> where G : class, IArcadianGame<G>
         }
 #endif
 
-        game.OnUpdate(context);
-        gameStateMachine.Update(Raylib.GetFrameTime());
-        context.GetResource<MainScheduleOrder<G>>().Run();
-        gameStateMachine.Draw();
-
         ImGuiRaylibBackend.End();
         Raylib.EndDrawing();
+
+        Raylib.UnloadRenderTexture(frame);
 
         if (Raylib.WindowShouldClose()) context.Quit();
     }

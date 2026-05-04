@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../raylib-cs/Raylib-cs.Native/Raylib-cs.Native.csproj"/>
-    <ProjectReference Include="../../raylib-cs/Raylib-cs/Raylib-cs.csproj"/>
+    <ProjectReference Include="../../raylib-cs/Raylib-cs.Native/Raylib-cs.Native.csproj" />
+    <ProjectReference Include="../../raylib-cs/Raylib-cs/Raylib-cs.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,13 +20,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\..\resources\default_font.ttf" Link="resources\default_font.ttf">
+    <EmbeddedResource Include="../../resources/default_font.ttf" Link="resources/default_font.ttf">
       <LogicalName>default_font.ttf</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\" />
+    <Folder Include="Drawing/" />
+    <Folder Include="Resources/" />
   </ItemGroup>
 
 </Project>
