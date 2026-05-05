@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PublishAot>true</PublishAot>
-    <IsAotCompatible>true</IsAotCompatible>
+    <!-- <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible> -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,11 +23,12 @@
     <EmbeddedResource Include="../../resources/default_font.ttf" Link="resources/default_font.ttf">
       <LogicalName>default_font.ttf</LogicalName>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Drawing/" />
-    <Folder Include="Resources/" />
+    <EmbeddedResource Include="../../resources/fa-regular-400.ttf" Link="resources/fa-regular-400.ttf">
+      <LogicalName>fa-regular-400.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../../resources/fa-solid-900.ttf" Link="resources/fa-solid-900.ttf">
+      <LogicalName>fa-solid-900.ttf</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

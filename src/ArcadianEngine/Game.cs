@@ -10,6 +10,8 @@ using ArcadianEngine.Resources;
 using ArcadianEngine.StateMachines;
 using System.Runtime.InteropServices;
 
+using IconFonts;
+
 namespace ArcadianEngine;
 
 /// <summary>
@@ -46,6 +48,7 @@ public class Game<G> where G : class, IArcadianGame<G>
 
         context.InsertResource(new MainScheduleOrder<G>(context));
         context.InsertResource(new RenderPipeline(windowSize));
+        context.InsertResource(new WorldHierarchyDebug<G>(context));
     }
 
     /// <summary>
@@ -66,6 +69,8 @@ public class Game<G> where G : class, IArcadianGame<G>
             ImGui.GetStyle().ScaleAllSizes(dpiScale);
             ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
             LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
+            LoadEmbeddedIconFont("fa-regular-400.ttf", 16.0f * dpiScale);
+            LoadEmbeddedIconFont("fa-solid-900.ttf", 16.0f * dpiScale);
         });
         // ImGui.GetIO().Fonts.Clear();
 
@@ -102,6 +107,50 @@ public class Game<G> where G : class, IArcadianGame<G>
             IntPtr ptr = handle.AddrOfPinnedObject();
             ImGui.GetIO().Fonts.AddFontFromMemoryTTF(ptr, buffer.Length, fontSize);
             ImGuiRaylibBackend.ReloadFonts();
+        }
+        finally
+        {
+            handle.Free();
+        }
+    }
+
+    protected unsafe void LoadEmbeddedIconFont(string resourceName, float fontSize)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using Stream stream = assembly.GetManifestResourceStream(resourceName)
+            ?? throw new Exception($"Embedded resource '{resourceName}' not found.");
+
+        byte[] buffer = new byte[stream.Length];
+        stream.Read(buffer, 0, buffer.Length);
+
+        GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+        try
+        {
+            IntPtr ptr = handle.AddrOfPinnedObject();
+            ImGuiIOPtr io = ImGui.GetIO();
+
+            // Glyph range for FA5
+            ushort[] ranges = [FontAwesome5.IconMin, FontAwesome5.IconMax, 0];
+            GCHandle rangeHandle = GCHandle.Alloc(ranges, GCHandleType.Pinned);
+            try
+            {
+                ImFontConfigPtr cfg = ImGuiNative.ImFontConfig_ImFontConfig();
+                cfg.MergeMode = true;  // merge into previous font
+                cfg.PixelSnapH = true; // cleaner rendering for icons
+                cfg.GlyphMinAdvanceX = fontSize; // monospace icons
+
+                io.Fonts.AddFontFromMemoryTTF(
+                    ptr,
+                    buffer.Length,
+                    fontSize,
+                    cfg,
+                    rangeHandle.AddrOfPinnedObject()
+                );
+            }
+            finally
+            {
+                rangeHandle.Free();
+            }
         }
         finally
         {
@@ -162,6 +211,9 @@ public class Game<G> where G : class, IArcadianGame<G>
 
             ImGui.EndMainMenuBar();
         }
+
+        context.GetResource<WorldHierarchyDebug<G>>().Draw();
+        ImGui.ShowDemoWindow();
 #endif
 
         ImGuiRaylibBackend.End();
