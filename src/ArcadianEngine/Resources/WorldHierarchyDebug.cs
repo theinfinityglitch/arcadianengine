@@ -11,20 +11,24 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
     private readonly EntityStore _world = cx.Game.world;
     private int? _selectedEntityId = null;
     private readonly Dictionary<(int, Type), bool> _openInspectors = [];
-    private readonly Dictionary<Type, Action<Entity, object>> _setterCache = new();
+    private readonly Dictionary<Type, Action<Entity, object>> _setterCache = [];
 
     public void Draw()
     {
         // Hierarchy window
         if (ImGui.Begin($"{Lucide.Boxes} World Hierarchy"))
         {
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 4.0f * 1.25f));
+
             foreach (var entity in _world.Entities)
             {
                 if (!entity.IsNull && entity.Parent.IsNull)
                     DrawEntity(entity);
             }
+
+            ImGui.PopStyleVar();
+            ImGui.End();
         }
-        ImGui.End();
 
         DrawEntityInspector();
 
@@ -58,15 +62,17 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
     private void DrawEntity(Entity entity)
     {
         var hasChildren = entity.ChildEntities.Count > 0;
-        var hasAny = hasChildren || entity.Components.Count > 0;
+        var hasAny = hasChildren || entity.Components.Count > 0 || entity.Tags.Count > 0;
         var isSelected = _selectedEntityId == entity.Id;
 
-        var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth;
+        var entity_flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick | ImGuiTreeNodeFlags.SpanAvailWidth | ImGuiTreeNodeFlags.FramePadding;
+        var group_flags = ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding;
+        var item_flags = ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth;
 
-        if (!hasAny) flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
-        if (isSelected) flags |= ImGuiTreeNodeFlags.Selected;
+        if (!hasAny) entity_flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
+        if (isSelected) entity_flags |= ImGuiTreeNodeFlags.Selected;
 
-        bool opened = ImGui.TreeNodeEx($"{Lucide.Box} Entity {entity.Id}", flags);
+        bool opened = ImGui.TreeNodeEx($"{Lucide.Box} Entity {entity.Id}", entity_flags);
 
         // Single click — select entity
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
@@ -76,7 +82,7 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
         {
             if (entity.Components.Count > 0)
             {
-                if (ImGui.TreeNodeEx($"{Lucide.ServerCog} Components", ImGuiTreeNodeFlags.SpanAvailWidth))
+                if (ImGui.TreeNodeEx($"{Lucide.ServerCog} Components", group_flags))
                 {
                     foreach (var component in entity.Components)
                     {
@@ -85,12 +91,29 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
 
                         ImGui.TreeNodeEx(
                             $"{Lucide.Settings} {type.Name}",
-                            ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen
+                            item_flags
                         );
 
                         // Double click — open floating inspector for this specific component
                         if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                             _openInspectors[key] = true;
+                    }
+                    ImGui.TreePop();
+                }
+            }
+
+            if (entity.Tags.Count > 0)
+            {
+                if (ImGui.TreeNodeEx($"{Lucide.Tags} Tags", group_flags))
+                {
+                    foreach (var tag in entity.Tags)
+                    {
+                        var type = tag.Type;
+
+                        ImGui.TreeNodeEx(
+                            $"{Lucide.Tag} {type.Name}",
+                            item_flags
+                        );
                     }
                     ImGui.TreePop();
                 }
