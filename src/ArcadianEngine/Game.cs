@@ -69,10 +69,8 @@ public class Game<G> where G : class, IArcadianGame<G>
             ImGui.GetStyle().ScaleAllSizes(dpiScale);
             ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
             LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
-            LoadEmbeddedIconFont("fa-regular-400.ttf", 16.0f * dpiScale);
-            LoadEmbeddedIconFont("fa-solid-900.ttf", 16.0f * dpiScale);
+            LoadEmbeddedIconFont("lucide.ttf", 12.0f * dpiScale, Lucide.IconMin, Lucide.IconMax);
         });
-        // ImGui.GetIO().Fonts.Clear();
 
         Initialize();
         Update(); // Update the game once at start
@@ -114,7 +112,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         }
     }
 
-    protected unsafe void LoadEmbeddedIconFont(string resourceName, float fontSize)
+    protected unsafe void LoadEmbeddedIconFont(string resourceName, float fontSize, ushort iconMin, ushort iconMax)
     {
         var assembly = Assembly.GetExecutingAssembly();
         using Stream stream = assembly.GetManifestResourceStream(resourceName)
@@ -130,7 +128,7 @@ public class Game<G> where G : class, IArcadianGame<G>
             ImGuiIOPtr io = ImGui.GetIO();
 
             // Glyph range for FA5
-            ushort[] ranges = [FontAwesome5.IconMin, FontAwesome5.IconMax, 0];
+            ushort[] ranges = [iconMin, iconMax, 0];
             GCHandle rangeHandle = GCHandle.Alloc(ranges, GCHandleType.Pinned);
             try
             {

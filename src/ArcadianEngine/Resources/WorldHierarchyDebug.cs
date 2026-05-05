@@ -16,7 +16,7 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
     public void Draw()
     {
         // Hierarchy window
-        if (ImGui.Begin($"{FontAwesome5.Cubes} World Hierarchy"))
+        if (ImGui.Begin($"{Lucide.Boxes} World Hierarchy"))
         {
             foreach (var entity in _world.Entities)
             {
@@ -43,7 +43,7 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
                 continue;
             }
 
-            var title = $"{FontAwesome5.Cog} {type.Name} (Entity {entityId})";
+            var title = $"{Lucide.Settings} {type.Name} (Entity {entityId})";
             ImGui.SetNextWindowSize(new Vector2(300, 200), ImGuiCond.FirstUseEver);
 
             if (ImGui.Begin(title, ref open))
@@ -66,7 +66,7 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
         if (!hasAny) flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
         if (isSelected) flags |= ImGuiTreeNodeFlags.Selected;
 
-        bool opened = ImGui.TreeNodeEx($"{FontAwesome5.Cube} Entity {entity.Id}", flags);
+        bool opened = ImGui.TreeNodeEx($"{Lucide.Box} Entity {entity.Id}", flags);
 
         // Single click — select entity
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
@@ -76,7 +76,7 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
         {
             if (entity.Components.Count > 0)
             {
-                if (ImGui.TreeNodeEx($"{FontAwesome5.Cogs} Components", ImGuiTreeNodeFlags.SpanAvailWidth))
+                if (ImGui.TreeNodeEx($"{Lucide.ServerCog} Components", ImGuiTreeNodeFlags.SpanAvailWidth))
                 {
                     foreach (var component in entity.Components)
                     {
@@ -84,7 +84,7 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
                         var key = (entity.Id, type);
 
                         ImGui.TreeNodeEx(
-                            $"{FontAwesome5.Cog} {type.Name}",
+                            $"{Lucide.Settings} {type.Name}",
                             ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen
                         );
 
@@ -130,7 +130,7 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
             return;
         }
 
-        ImGui.Text($"{FontAwesome5.Cube} Entity {entity.Id}");
+        ImGui.Text($"{Lucide.Box} Entity {entity.Id}");
         ImGui.Separator();
 
         if (entity.Components.Count == 0)
@@ -148,11 +148,17 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
 
             // Allow the button to overlap the header
             ImGui.SetNextItemAllowOverlap();
-            bool open = ImGui.CollapsingHeader($"{FontAwesome5.Cog} {type.Name}", ImGuiTreeNodeFlags.DefaultOpen);
+
+            bool open = false;
+
+            if (component.Type.Type.GetFields(BindingFlags.Public | BindingFlags.Instance).Length != 0)
+                open = ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}");
+            else
+                open = ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.Leaf);
 
             // Position button on the right side of the header
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - 20);
-            if (ImGui.SmallButton($"{FontAwesome5.ExternalLinkAlt}##{type.Name}"))
+            if (ImGui.SmallButton($"{Lucide.ExternalLink}##{type.Name}"))
                 _openInspectors[key] = true;
             ImGui.SetItemTooltip("Make floating");
 
