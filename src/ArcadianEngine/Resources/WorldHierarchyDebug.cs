@@ -24,7 +24,6 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         // Hierarchy window
         if (ImGui.Begin($"{Lucide.Earth} World Hierarchy"))
         {
-            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 4.0f * Raylib.GetWindowScaleDPI().X));
             var main_flags = ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding;
 
             // Resources node
@@ -60,8 +59,6 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
                 }
                 ImGui.TreePop();
             }
-
-            ImGui.PopStyleVar();
         }
         ImGui.End();
 
@@ -207,29 +204,34 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         // Components section
         if (entity.Components.Count > 0)
         {
-            ImGui.Text($"{Lucide.ServerCog} Components");
-            foreach (var component in entity.Components)
+            if (ImGui.TreeNodeEx($"{Lucide.ServerCog} Components", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanFullWidth))
             {
-                var type = component.Type.Type;
-                var key = (entity.Id, type);
-
-                ImGui.SetNextItemAllowOverlap();
-
-                bool open = component.Type.Type.GetFields(BindingFlags.Public | BindingFlags.Instance).Length != 0
-                    ? ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.SpanFullWidth)
-                    : ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth);
-
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - 20);
-                if (ImGui.SmallButton($"{Lucide.ExternalLink}##{type.Name}"))
-                    _openInspectors[key] = true;
-                ImGui.SetItemTooltip("Make floating");
-
-                if (open)
+                ImGui.Unindent();
+                foreach (var component in entity.Components)
                 {
-                    ImGui.Indent();
-                    DrawComponentInspector(entity, type);
-                    ImGui.Unindent();
+                    var type = component.Type.Type;
+                    var key = (entity.Id, type);
+
+                    ImGui.SetNextItemAllowOverlap();
+
+                    bool open = component.Type.Type.GetFields(BindingFlags.Public | BindingFlags.Instance).Length != 0
+                        ? ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.SpanFullWidth)
+                        : ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth);
+
+                    ImGui.SameLine(ImGui.GetContentRegionAvail().X - 20);
+                    if (ImGui.SmallButton($"{Lucide.ExternalLink}##{type.Name}"))
+                        _openInspectors[key] = true;
+                    ImGui.SetItemTooltip("Make floating");
+
+                    if (open)
+                    {
+                        ImGui.Indent();
+                        DrawComponentInspector(entity, type);
+                        ImGui.Unindent();
+                    }
                 }
+                ImGui.Indent();
+                ImGui.TreePop();
             }
         }
 
@@ -237,11 +239,19 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         if (entity.Tags.Count > 0)
         {
             ImGui.Separator();
-            ImGui.Text($"{Lucide.Tags} Tags");
+            if (ImGui.TreeNodeEx($"{Lucide.Tags} Tags", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanFullWidth))
+            {
+                ImGui.Unindent();
 
-            foreach (var tag in entity.Tags)
-                ImGui.TreeNodeEx($"{Lucide.Tag} {tag.Type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth);
-            ImGui.TreePop();
+                foreach (var tag in entity.Tags)
+                {
+                    ImGui.TreeNodeEx($"{Lucide.Tag} {tag.Type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth);
+                    ImGui.TreePop();
+                }
+
+                ImGui.Indent();
+                ImGui.TreePop();
+            }
         }
     }
 

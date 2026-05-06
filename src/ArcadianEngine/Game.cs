@@ -66,7 +66,9 @@ public class Game<G> where G : class, IArcadianGame<G>
         ImGuiRaylibBackend.Setup(() =>
         {
             ImGuiRaylibBackend.LoadDefaultFont = false;
-            ImGui.GetStyle().ScaleAllSizes(dpiScale);
+            var style = ImGui.GetStyle();
+            style.ScaleAllSizes(dpiScale);
+            style.FramePadding = new(ImGui.GetStyle().FramePadding.X, 4.0f * Raylib.GetWindowScaleDPI().X);
             ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
             LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
             LoadEmbeddedIconFont("lucide.ttf", 12.0f * dpiScale, Lucide.IconMin, Lucide.IconMax);
