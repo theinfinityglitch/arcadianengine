@@ -1,12 +1,14 @@
 using System.Numerics;
 using System.Reflection;
+using System.Text.RegularExpressions;
+
 using Friflo.Engine.ECS;
 using ImGuiNET;
 using IconFonts;
 
 namespace ArcadianEngine.Resources;
 
-public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadianGame<G>
+public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadianGame<G>
 {
     private readonly EntityStore _world = cx.Game.world;
     private readonly Dictionary<(int, Type), bool> _openInspectors = [];
@@ -336,41 +338,47 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
 
     private (bool modified, object? value) DrawEditableField(string name, object? value)
     {
+        // 1. Insert spaces before every capital letter
+        string spaced = FieldRegex().Replace(name, " $1").Trim();
+
+        // 2. Capitalize the first letter of the entire string
+        string field_name = char.ToUpper(spaced[0]) + spaced.Substring(1);
+
         switch (value)
         {
             case int i:
                 {
-                    ImGui.DragInt(name, ref i);
+                    ImGui.DragInt(field_name, ref i);
                     return (ImGui.IsItemEdited(), i);
                 }
             case float f:
                 {
-                    ImGui.DragFloat(name, ref f, 0.1f, default, default, "%.3f");
+                    ImGui.DragFloat(field_name, ref f, 0.1f, default, default, "%.3f");
                     return (ImGui.IsItemEdited(), f);
                 }
             case bool b:
                 {
-                    ImGui.Checkbox(name, ref b);
+                    ImGui.Checkbox(field_name, ref b);
                     return (ImGui.IsItemDeactivatedAfterEdit(), b);
                 }
             case Vector2 v:
                 {
                     Vector2 imVec = new(v.X, v.Y);
-                    ImGui.InputFloat2(name, ref imVec);
+                    ImGui.InputFloat2(field_name, ref imVec);
                     bool changed = ImGui.IsItemDeactivatedAfterEdit();
                     return (changed, new Vector2(imVec.X, imVec.Y));
                 }
             case Vector3 v:
                 {
                     Vector3 imVec = new(v.X, v.Y, v.Z);
-                    ImGui.InputFloat3(name, ref imVec);
+                    ImGui.InputFloat3(field_name, ref imVec);
                     bool changed = ImGui.IsItemDeactivatedAfterEdit();
                     return (changed, new Vector3(imVec.X, imVec.Y, imVec.Z));
                 }
             case List<int> li:
                 {
                     int selected_idx = 0;
-                    if (ImGui.BeginListBox(name))
+                    if (ImGui.BeginListBox(field_name))
                     {
                         foreach (int i in li)
                         {
@@ -387,8 +395,11 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
                     return (false, li);
                 }
             default:
-                ImGui.TextDisabled($"{name}: {value?.ToString() ?? "null"}");
+                ImGui.TextDisabled($"{field_name}: {value?.ToString() ?? "null"}");
                 return (false, value);
         }
     }
+
+    [GeneratedRegex(@"([A-Z])")]
+    private static partial Regex FieldRegex();
 }
