@@ -9,21 +9,50 @@ namespace ArcadianEngine.Resources;
 public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadianGame<G>
 {
     private readonly EntityStore _world = cx.Game.world;
-    private int? _selectedEntityId = null;
     private readonly Dictionary<(int, Type), bool> _openInspectors = [];
     private readonly Dictionary<Type, Action<Entity, object>> _setterCache = [];
+    private int? _selectedEntityId = null;
+    private Type? _selectedResourceType = null;
 
     public void Draw()
     {
         // Hierarchy window
-        if (ImGui.Begin($"{Lucide.Boxes} World Hierarchy"))
+        if (ImGui.Begin($"{Lucide.Earth} World Hierarchy"))
         {
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 4.0f * 1.25f));
+            var main_flags = ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding;
 
-            foreach (var entity in _world.Entities)
+            // Resources node
+            var resources = cx.GetAllResources();
+            if (ImGui.TreeNodeEx($"{Lucide.Package} Resources", main_flags))
             {
-                if (!entity.IsNull && entity.Parent.IsNull)
-                    DrawEntity(entity);
+                foreach (var (type, _) in resources)
+                {
+                    var item_flags = ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth;
+                    var isSelected = _selectedResourceType == type;
+
+                    if (isSelected) item_flags |= ImGuiTreeNodeFlags.Selected;
+
+                    ImGui.TreeNodeEx($"{Lucide.Database} {type.Name}", item_flags);
+
+                    if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+                    {
+                        _selectedResourceType = type;
+                        _selectedEntityId = null;
+                    }
+                }
+                ImGui.TreePop();
+            }
+
+            // Entities node
+            if (ImGui.TreeNodeEx($"{Lucide.Boxes} Entities", main_flags))
+            {
+                foreach (var entity in _world.Entities)
+                {
+                    if (!entity.IsNull && entity.Parent.IsNull)
+                        DrawEntity(entity);
+                }
+                ImGui.TreePop();
             }
 
             ImGui.PopStyleVar();
@@ -65,7 +94,7 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
         var hasAny = hasChildren || entity.Components.Count > 0 || entity.Tags.Count > 0;
         var isSelected = _selectedEntityId == entity.Id;
 
-        var entity_flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick | ImGuiTreeNodeFlags.SpanAvailWidth | ImGuiTreeNodeFlags.FramePadding;
+        var entity_flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding;
         var group_flags = ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding;
         var item_flags = ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth;
 
@@ -76,7 +105,10 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
 
         // Single click — select entity
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+        {
             _selectedEntityId = entity.Id;
+            _selectedResourceType = null;
+        }
 
         if (opened && hasAny)
         {
@@ -136,64 +168,116 @@ public class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadia
             return;
         }
 
-        if (_selectedEntityId == null)
-        {
-            ImGui.TextDisabled("No entity selected.");
-            ImGui.End();
-            return;
-        }
+        if (_selectedEntityId != null)
+            DrawSelectedEntity();
+        else if (_selectedResourceType != null)
+            DrawSelectedResource();
+        else
+            ImGui.TextDisabled("Nothing selected.");
 
+        ImGui.End();
+    }
+
+    private void DrawSelectedEntity()
+    {
         var entity = _world.Entities.FirstOrDefault(e => e.Id == _selectedEntityId);
 
         if (entity.IsNull)
         {
             ImGui.TextDisabled("Entity no longer exists.");
             _selectedEntityId = null;
-            ImGui.End();
             return;
         }
 
         ImGui.Text($"{Lucide.Box} Entity {entity.Id}");
         ImGui.Separator();
 
-        if (entity.Components.Count == 0)
+        if (entity.Components.Count == 0 && entity.Tags.Count == 0)
         {
-            ImGui.TextDisabled("No components.");
-            ImGui.End();
+            ImGui.TextDisabled("No components or tags.");
             return;
         }
 
-        // List all components as collapsible headers
-        foreach (var component in entity.Components)
+        // Components section
+        if (entity.Components.Count > 0)
         {
-            var type = component.Type.Type;
-            var key = (entity.Id, type);
-
-            // Allow the button to overlap the header
-            ImGui.SetNextItemAllowOverlap();
-
-            bool open = false;
-
-            if (component.Type.Type.GetFields(BindingFlags.Public | BindingFlags.Instance).Length != 0)
-                open = ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}");
-            else
-                open = ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.Leaf);
-
-            // Position button on the right side of the header
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - 20);
-            if (ImGui.SmallButton($"{Lucide.ExternalLink}##{type.Name}"))
-                _openInspectors[key] = true;
-            ImGui.SetItemTooltip("Make floating");
-
-            if (open)
+            ImGui.Text($"{Lucide.ServerCog} Components");
+            foreach (var component in entity.Components)
             {
-                ImGui.Indent();
-                DrawComponentInspector(entity, type);
-                ImGui.Unindent();
+                var type = component.Type.Type;
+                var key = (entity.Id, type);
+
+                ImGui.SetNextItemAllowOverlap();
+
+                bool open = component.Type.Type.GetFields(BindingFlags.Public | BindingFlags.Instance).Length != 0
+                    ? ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.SpanFullWidth)
+                    : ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth);
+
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - 20);
+                if (ImGui.SmallButton($"{Lucide.ExternalLink}##{type.Name}"))
+                    _openInspectors[key] = true;
+                ImGui.SetItemTooltip("Make floating");
+
+                if (open)
+                {
+                    ImGui.Indent();
+                    DrawComponentInspector(entity, type);
+                    ImGui.Unindent();
+                }
             }
         }
 
-        ImGui.End();
+        // Tags section
+        if (entity.Tags.Count > 0)
+        {
+            ImGui.Separator();
+            ImGui.Text($"{Lucide.Tags} Tags");
+
+            foreach (var tag in entity.Tags)
+                ImGui.TreeNodeEx($"{Lucide.Tag} {tag.Type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth);
+            ImGui.TreePop();
+        }
+    }
+
+    private void DrawSelectedResource()
+    {
+        var resources = cx.GetAllResources();
+
+        if (!resources.TryGetValue(_selectedResourceType!, out var resource))
+        {
+            ImGui.TextDisabled("Resource no longer exists.");
+            _selectedResourceType = null;
+            return;
+        }
+
+        ImGui.Text($"{Lucide.Database} {_selectedResourceType!.Name}");
+        ImGui.Separator();
+
+        var fields = _selectedResourceType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+        var props = _selectedResourceType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        if (fields.Length == 0 && props.Length == 0)
+        {
+            ImGui.TextDisabled("No inspectable data.");
+            return;
+        }
+
+        // Resources are classes so we can edit directly without boxing tricks
+        foreach (var field in fields)
+        {
+            var value = field.GetValue(resource);
+            var result = DrawEditableField(field.Name, value);
+            if (result.modified)
+                field.SetValue(resource, result.value);
+        }
+
+        // Properties (read-only for now since setters may have side effects)
+        foreach (var prop in props)
+        {
+            if (!prop.CanRead) continue;
+            var value = prop.GetValue(resource);
+            ImGui.TextDisabled($"{prop.Name}: {value?.ToString() ?? "null"}");
+        }
     }
 
     private void DrawComponentInspector(Entity entity, Type componentType)

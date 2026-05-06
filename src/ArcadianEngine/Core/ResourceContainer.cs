@@ -17,6 +17,8 @@ public class ResourceContainer
         throw new InvalidOperationException($"Resource of type {typeof(T).Name} not found.");
     }
 
+    public IReadOnlyDictionary<Type, object> GetAllResources() => resources;
+
     public bool HasResource<T>() where T : class => resources.ContainsKey(typeof(T));
 
     public bool TryGetResource<T>(out T? resource) where T : class

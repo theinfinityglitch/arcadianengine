@@ -165,6 +165,7 @@ public class Game<G> where G : class, IArcadianGame<G>
 
     protected virtual void Update()
     {
+        ImGuiRaylibBackend.Begin();
         game.OnUpdate(context);
         gameStateMachine.Update(Raylib.GetFrameTime());
         context.GetResource<MainScheduleOrder<G>>().Run();
@@ -175,7 +176,6 @@ public class Game<G> where G : class, IArcadianGame<G>
         var frame = rp.Flush();
 
         Raylib.BeginDrawing();
-        ImGuiRaylibBackend.Begin();
 
         rp.PresentToScreen(frame);
 
@@ -211,7 +211,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         }
 
         context.GetResource<WorldHierarchyDebug<G>>().Draw();
-        ImGui.ShowDemoWindow();
+        // ImGui.ShowDemoWindow();
 #endif
 
         ImGuiRaylibBackend.End();
