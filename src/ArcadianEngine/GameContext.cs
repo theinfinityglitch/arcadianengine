@@ -18,7 +18,7 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
 
     public bool IsBorderlessWindow()
     {
-        return Raylib.IsWindowState(ConfigFlags.UndecoratedWindow);
+        return Raylib.IsWindowState(ConfigFlags.BorderlessWindowMode);
     }
 
     public void TogleBorderlessWindow()

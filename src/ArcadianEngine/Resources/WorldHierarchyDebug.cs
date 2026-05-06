@@ -7,6 +7,8 @@ using ImGuiNET;
 using IconFonts;
 using Raylib_cs;
 
+using ArcadianEngine.Utils;
+
 namespace ArcadianEngine.Resources;
 
 public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, IArcadianGame<G>
@@ -33,10 +35,11 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
                 {
                     var item_flags = ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth;
                     var isSelected = _selectedResourceType == type;
+                    var name = type.GetFriendlyName();
 
                     if (isSelected) item_flags |= ImGuiTreeNodeFlags.Selected;
 
-                    ImGui.TreeNodeEx($"{Lucide.Database} {type.Name}", item_flags);
+                    ImGui.TreeNodeEx($"{Lucide.Database} {name}", item_flags);
 
                     if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
                     {
@@ -253,10 +256,11 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
             return;
         }
 
-        ImGui.Text($"{Lucide.Database} {_selectedResourceType!.Name}");
+        var resource_name = _selectedResourceType!.GetFriendlyName();
+        ImGui.Text($"{Lucide.Database} {resource_name}");
         ImGui.Separator();
 
-        var fields = _selectedResourceType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+        var fields = _selectedResourceType!.GetFields(BindingFlags.Public | BindingFlags.Instance);
         var props = _selectedResourceType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         if (fields.Length == 0 && props.Length == 0)
