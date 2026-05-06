@@ -1,36 +1,28 @@
-﻿namespace ArcadianEngine.Math;
+﻿using System.Numerics;
 
-public struct Vector2i(int x, int y)
+namespace ArcadianEngine.Math;
+
+public struct Vector2i(int x, int y) : IEquatable<Vector2i>
 {
-    public int x = x, y = y;
+    public int X = x;
+    public int Y = y;
 
-    public static Vector2i Zero()
-    {
-        return new(0, 0);
-    }
+    // --- Compatibility with System.Numerics.Vector2 ---
+    public static explicit operator Vector2(Vector2i value) => new(value.X, value.Y);
+    public static explicit operator Vector2i(Vector2 value) => new((int)value.X, (int)value.Y);
 
-    public static Vector2i One()
-    {
-        return new(1, 1);
-    }
+    // --- Basic Operators ---
+    public static Vector2i operator +(Vector2i left, Vector2i right) => new(left.X + right.X, left.Y + right.Y);
+    public static Vector2i operator -(Vector2i left, Vector2i right) => new(left.X - right.X, left.Y - right.Y);
+    public static Vector2i operator *(Vector2i left, Vector2i right) => new(left.X * right.X, left.Y * right.Y);
+    public static Vector2i operator *(Vector2i value, int scale) => new(value.X * scale, value.Y * scale);
 
-    public static Vector2i Left()
-    {
-        return new(-1, 0);
-    }
+    // --- Equality ---
+    public readonly bool Equals(Vector2i other) => X == other.X && Y == other.Y;
+    public override readonly bool Equals(object? obj) => obj is Vector2i other && Equals(other);
+    public override readonly int GetHashCode() => HashCode.Combine(X, Y);
+    public static bool operator ==(Vector2i left, Vector2i right) => left.Equals(right);
+    public static bool operator !=(Vector2i left, Vector2i right) => !left.Equals(right);
 
-    public static Vector2i Right()
-    {
-        return new(1, 0);
-    }
-
-    public static Vector2i Up()
-    {
-        return new(0, -1);
-    }
-
-    public static Vector2i Down()
-    {
-        return new(0, 1);
-    }
+    public override readonly string ToString() => $"<{X}, {Y}>";
 }

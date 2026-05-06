@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Friflo.Engine.ECS;
 using ImGuiNET;
 using IconFonts;
+using Raylib_cs;
 
 namespace ArcadianEngine.Resources;
 
@@ -21,7 +22,7 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         // Hierarchy window
         if (ImGui.Begin($"{Lucide.Earth} World Hierarchy"))
         {
-            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 4.0f * 1.25f));
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 4.0f * Raylib.GetWindowScaleDPI().X));
             var main_flags = ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding;
 
             // Resources node
@@ -58,8 +59,8 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
             }
 
             ImGui.PopStyleVar();
-            ImGui.End();
         }
+        ImGui.End();
 
         DrawEntityInspector();
 
@@ -359,21 +360,26 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
             case bool b:
                 {
                     ImGui.Checkbox(field_name, ref b);
-                    return (ImGui.IsItemDeactivatedAfterEdit(), b);
+                    return (ImGui.IsItemEdited(), b);
                 }
             case Vector2 v:
                 {
                     Vector2 imVec = new(v.X, v.Y);
-                    ImGui.InputFloat2(field_name, ref imVec);
-                    bool changed = ImGui.IsItemDeactivatedAfterEdit();
-                    return (changed, new Vector2(imVec.X, imVec.Y));
+                    ImGui.DragFloat2(field_name, ref imVec);
+                    return (ImGui.IsItemEdited(), new Vector2(imVec.X, imVec.Y));
                 }
             case Vector3 v:
                 {
                     Vector3 imVec = new(v.X, v.Y, v.Z);
-                    ImGui.InputFloat3(field_name, ref imVec);
-                    bool changed = ImGui.IsItemDeactivatedAfterEdit();
-                    return (changed, new Vector3(imVec.X, imVec.Y, imVec.Z));
+                    ImGui.DragFloat3(field_name, ref imVec);
+                    // bool changed = ImGui.IsItemDeactivatedAfterEdit();
+                    return (ImGui.IsItemEdited(), new Vector3(imVec.X, imVec.Y, imVec.Z));
+                }
+            case Math.Vector2i v:
+                {
+                    int[] vir = [v.X, v.Y];
+                    ImGui.DragInt2(field_name, ref vir[0]);
+                    return (ImGui.IsItemEdited(), new Math.Vector2i(vir[0], vir[1]));
                 }
             case List<int> li:
                 {

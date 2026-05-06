@@ -38,7 +38,7 @@ public class RenderPipeline(Vector2i virtualSize)
         if (_layerTextures.TryGetValue(layer, out var texture))
             return texture;
 
-        var newTexture = Raylib.LoadRenderTexture(virtualSize.x, virtualSize.y);
+        var newTexture = Raylib.LoadRenderTexture(virtualSize.X, virtualSize.Y);
         _layerTextures[layer] = newTexture;
         return newTexture;
     }
@@ -46,7 +46,7 @@ public class RenderPipeline(Vector2i virtualSize)
     public RenderTexture2D Flush()
     {
         // Final composed texture
-        var output = Raylib.LoadRenderTexture(virtualSize.x, virtualSize.y);
+        var output = Raylib.LoadRenderTexture(virtualSize.X, virtualSize.Y);
 
         Raylib.BeginTextureMode(output);
         Raylib.ClearBackground(Color.Black);
@@ -69,7 +69,7 @@ public class RenderPipeline(Vector2i virtualSize)
             Raylib.BeginTextureMode(output);
             Raylib.DrawTextureRec(
                 layerTex.Texture,
-                new Rectangle(0, 0, virtualSize.x, -virtualSize.y), // flip Y
+                new Rectangle(0, 0, virtualSize.X, -virtualSize.Y), // flip Y
                 Vector2.Zero,
                 Color.White
             );
@@ -87,12 +87,12 @@ public class RenderPipeline(Vector2i virtualSize)
         int screenH = Raylib.GetRenderHeight();
 
         float scale = System.Math.Min(
-            (float)screenW / virtualSize.x,
-            (float)screenH / virtualSize.y
+            (float)screenW / virtualSize.X,
+            (float)screenH / virtualSize.Y
         );
 
-        int destW = (int)(virtualSize.x * scale);
-        int destH = (int)(virtualSize.y * scale);
+        int destW = (int)(virtualSize.X * scale);
+        int destH = (int)(virtualSize.Y * scale);
         int offsetX = (screenW - destW) / 2;
         int offsetY = (screenH - destH) / 2;
 
@@ -100,7 +100,7 @@ public class RenderPipeline(Vector2i virtualSize)
 
         Raylib.DrawTexturePro(
             frame.Texture,
-            new Rectangle(0, 0, virtualSize.x, -virtualSize.y), // flip Y
+            new Rectangle(0, 0, virtualSize.X, -virtualSize.Y), // flip Y
             new Rectangle(offsetX, offsetY, destW, destH),
             Vector2.Zero,
             0f,

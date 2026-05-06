@@ -57,7 +57,7 @@ public class Game<G> where G : class, IArcadianGame<G>
     public void Run()
     {
         Raylib.SetConfigFlags(ConfigFlags.HighDpiWindow);
-        Raylib.InitWindow(windowSize.x, windowSize.y, formated_title);
+        Raylib.InitWindow(windowSize.X, windowSize.Y, formated_title);
         Raylib.SetTargetFPS(60);
 
         float dpiScale = Raylib.GetWindowScaleDPI().X;
