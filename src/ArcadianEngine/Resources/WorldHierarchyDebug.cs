@@ -7,6 +7,7 @@ using ImGuiNET;
 using IconFonts;
 
 using ArcadianEngine.Utils;
+using Raylib_cs;
 
 namespace ArcadianEngine.Resources;
 
@@ -389,6 +390,11 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
                     ImGui.Checkbox(field_name, ref b);
                     return (ImGui.IsItemEdited(), b);
                 }
+            case string s:
+                {
+                    ImGui.InputText(field_name, ref s, 256);
+                    return (ImGui.IsItemEdited(), s);
+                }
             case Vector2 v:
                 {
                     Vector2 imVec = new(v.X, v.Y);
@@ -426,6 +432,20 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
                     }
 
                     return (false, li);
+                }
+            case Color c:
+                {
+                    Vector4 colorVec = new(
+                        c.R / 255f, c.G / 255f, c.B / 255f, c.A / 255f
+                    );
+                    ImGui.ColorEdit4(field_name, ref colorVec);
+
+                    return (ImGui.IsItemEdited(), new Color(
+                        (byte)(colorVec.X * 255),
+                        (byte)(colorVec.Y * 255),
+                        (byte)(colorVec.Z * 255),
+                        (byte)(colorVec.W * 255))
+                    );
                 }
             default:
                 ImGui.TextDisabled($"{field_name}: {value?.ToString() ?? "null"}");
