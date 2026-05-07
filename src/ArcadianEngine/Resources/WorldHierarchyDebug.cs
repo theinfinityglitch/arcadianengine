@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using Friflo.Engine.ECS;
 using ImGuiNET;
 using IconFonts;
-using Raylib_cs;
 
 using ArcadianEngine.Utils;
 
@@ -79,7 +78,12 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
                 continue;
             }
 
-            var title = $"{Lucide.Settings} {type.Name} (Entity {entityId})";
+            string entity_name;
+
+            if (entity.TryGetComponent<EntityName>(out var name)) entity_name = name.value;
+            else entity_name = $"Entity {entity.Id}";
+
+            var title = $"{Lucide.Settings} {type.Name} ({entity_name})";
             ImGui.SetNextWindowSize(new Vector2(300, 200), ImGuiCond.FirstUseEver);
 
             if (ImGui.Begin(title, ref open))
@@ -103,8 +107,12 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
 
         if (!hasAny) entity_flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
         if (isSelected) entity_flags |= ImGuiTreeNodeFlags.Selected;
+        string entity_name;
 
-        bool opened = ImGui.TreeNodeEx($"{Lucide.Box} Entity {entity.Id}", entity_flags);
+        if (entity.TryGetComponent<EntityName>(out var name)) entity_name = name.value;
+        else entity_name = $"Entity {entity.Id}";
+
+        bool opened = ImGui.TreeNodeEx($"{Lucide.Box} {entity_name}", entity_flags);
 
         // Single click — select entity
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
@@ -192,7 +200,12 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
             return;
         }
 
-        ImGui.Text($"{Lucide.Box} Entity {entity.Id}");
+        string entity_name;
+
+        if (entity.TryGetComponent<EntityName>(out var name)) entity_name = name.value;
+        else entity_name = $"Entity {entity.Id}";
+
+        ImGui.Text($"{Lucide.Box} {entity_name}");
         ImGui.Separator();
 
         if (entity.Components.Count == 0 && entity.Tags.Count == 0)
