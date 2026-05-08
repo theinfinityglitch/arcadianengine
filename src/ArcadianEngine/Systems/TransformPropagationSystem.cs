@@ -7,14 +7,14 @@ using ArcadianEngine.Components;
 
 namespace ArcadianEngine.Systems;
 
-public class TransformPropagationSystem : QuerySystem<Transform2D, GlobalTransform2D>
+public class TransformPropagationSystem : QuerySystem<Transform2D>
 {
     // Separate query for entities that have children
-    private ArchetypeQuery<Transform2D, GlobalTransform2D, TreeNode>? _parentQuery;
+    private ArchetypeQuery<Transform2D, TreeNode>? _parentQuery;
 
     protected override void OnAddStore(EntityStore store)
     {
-        _parentQuery = store.Query<Transform2D, GlobalTransform2D, TreeNode>();
+        _parentQuery = store.Query<Transform2D, TreeNode>();
     }
 
     protected override void OnUpdate()
@@ -22,53 +22,53 @@ public class TransformPropagationSystem : QuerySystem<Transform2D, GlobalTransfo
         // Only bother with hierarchy propagation if any parented entities exist
         if (_parentQuery?.Count == 0)
         {
-            Query.ForEachEntity((ref Transform2D local, ref GlobalTransform2D global, Entity _) =>
+            Query.ForEachEntity((ref Transform2D transform, Entity _) =>
             {
-                global.Position = local.Position;
-                global.Scale = local.Scale;
-                global.Rotation = local.Rotation;
-                global.ZIndex = local.ZIndex;
+                transform.GlobalPosition = transform.Position;
+                transform.GlobalScale = transform.Scale;
+                transform.GlobalRotation = transform.Rotation;
+                transform.GlobalZIndex = transform.ZIndex;
             });
             return;
         }
 
-        Query.ForEachEntity((ref Transform2D _, ref GlobalTransform2D _, Entity entity) =>
+        Query.ForEachEntity((ref Transform2D _, Entity entity) =>
         {
             if (entity.Parent.IsNull)
                 PropagateDown(entity, null);
         });
     }
 
-    private void PropagateDown(Entity entity, GlobalTransform2D? parentGlobal)
+    private void PropagateDown(Entity entity, Transform2D? parentTransform)
     {
-        if (!entity.TryGetComponent<Transform2D>(out var local)) return;
-        if (!entity.TryGetComponent<GlobalTransform2D>(out var global)) return;
+        if (!entity.TryGetComponent<Transform2D>(out var transform)) return;
+        // if (!entity.TryGetComponent<GlobalTransform2D>(out var global)) return;
 
-        if (parentGlobal == null)
+        if (parentTransform == null)
         {
-            global.Position = local.Position;
-            global.Scale = local.Scale;
-            global.Rotation = local.Rotation;
-            global.ZIndex = local.ZIndex;
+            transform.GlobalPosition = transform.Position;
+            transform.GlobalScale = transform.Scale;
+            transform.GlobalRotation = transform.Rotation;
+            transform.GlobalZIndex = transform.ZIndex;
         }
         else
         {
-            float cos = MathF.Cos(parentGlobal.Value.Rotation);
-            float sin = MathF.Sin(parentGlobal.Value.Rotation);
+            float cos = MathF.Cos(parentTransform.Value.Rotation);
+            float sin = MathF.Sin(parentTransform.Value.Rotation);
 
-            global.Position = parentGlobal.Value.Position + new Vector2(
-                local.Position.X * cos - local.Position.Y * sin,
-                local.Position.X * sin + local.Position.Y * cos
+            transform.GlobalPosition = parentTransform.Value.Position + new Vector2(
+                transform.Position.X * cos - transform.Position.Y * sin,
+                transform.Position.X * sin + transform.Position.Y * cos
             );
 
-            global.Scale = parentGlobal.Value.Scale * local.Scale;
-            global.Rotation = parentGlobal.Value.Rotation + local.Rotation;
-            global.ZIndex = parentGlobal.Value.ZIndex + local.ZIndex;
+            transform.GlobalScale = parentTransform.Value.Scale * transform.Scale;
+            transform.GlobalRotation = parentTransform.Value.Rotation + transform.Rotation;
+            transform.GlobalZIndex = parentTransform.Value.ZIndex + transform.ZIndex;
         }
 
-        entity.Set(global);
+        entity.Set(transform);
 
         foreach (var child in entity.ChildEntities)
-            PropagateDown(child, global);
+            PropagateDown(child, transform);
     }
 }

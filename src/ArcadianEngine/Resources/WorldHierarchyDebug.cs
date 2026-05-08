@@ -228,7 +228,10 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
 
                     ImGui.SetNextItemAllowOverlap();
 
-                    bool open = component.Type.Type.GetFields(BindingFlags.Public | BindingFlags.Instance).Length != 0
+                    var fields = type
+                        .GetFields(BindingFlags.Public | BindingFlags.Instance)
+                        .Where(f => f.GetCustomAttribute<ExportAttribute>() != null).ToArray();
+                    bool open = fields.Length != 0
                         ? ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.SpanFullWidth)
                         : ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth);
 
@@ -284,7 +287,10 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         ImGui.Text($"{Lucide.Database} {resource_name}");
         ImGui.Separator();
 
-        var fields = _selectedResourceType!.GetFields(BindingFlags.Public | BindingFlags.Instance);
+        var fields = _selectedResourceType!
+            .GetFields(BindingFlags.Public | BindingFlags.Instance)
+            .Where(f => f.GetCustomAttribute<ExportAttribute>() != null)
+            .ToArray();
         var props = _selectedResourceType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         if (fields.Length == 0 && props.Length == 0)
@@ -324,11 +330,14 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
             .MakeGenericMethod(componentType);
 
         var component = getMethod.Invoke(entity, null);
+        var fields = componentType
+            .GetFields(BindingFlags.Public | BindingFlags.Instance)
+            .Where(f => f.GetCustomAttribute<ExportAttribute>() != null);
         if (component == null) return;
 
         bool modified = false;
 
-        foreach (var field in componentType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+        foreach (var field in fields)
         {
             var value = field.GetValue(component);
             var result = DrawEditableField(componentName, field.Name, value);

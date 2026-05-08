@@ -12,7 +12,7 @@ public class RenderPipeline(Vector2i virtualSize)
     private readonly SortedDictionary<int, List<DrawCommand>> _commands = [];
     private readonly Dictionary<int, RenderTexture2D> _layerTextures = [];
 
-    public Vector2i virtualSize = virtualSize;
+    [Export] public Vector2i virtualSize = virtualSize;
 
     public void Draw(DrawCommand command)
     {
