@@ -20,6 +20,7 @@ public struct Transform2D(Vector2 position, Vector2 scale, float rotation, int z
 
     public Transform2D() : this(Vector2.Zero, Vector2.One, 0f, 0) { }
     public Transform2D(Vector2 position) : this(position, Vector2.One, 0f, 0) { }
+    public Transform2D(int zIndex) : this(Vector2.Zero, Vector2.One, 0f, zIndex) { }
 
     public readonly Vector2 Forward => new(MathF.Cos(Rotation), MathF.Sin(Rotation));
     public readonly Vector2 Backward => new(-MathF.Cos(Rotation), -MathF.Sin(Rotation));
