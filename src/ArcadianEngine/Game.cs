@@ -33,6 +33,9 @@ public class Game<G> where G : class, IArcadianGame<G>
     private readonly string formated_title;
     private readonly Vector2i windowSize;
 
+    private bool DrawWorldInspector = false;
+    private bool DrawConsole = false;
+
     public Game(G game, string title, Vector2i windowSize)
     {
         this.game = game;
@@ -50,6 +53,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         context.InsertResource(new MainScheduleOrder<G>(context));
         context.InsertResource(new RenderPipeline(windowSize));
         context.InsertResource(new WorldHierarchyDebug<G>(context));
+        context.InsertResource(new ImGuiConsole());
 
         context.GetResource<MainScheduleOrder<G>>().InsertSystem<PostUpdate, TransformPropagationSystem>(new TransformPropagationSystem());
     }
@@ -208,6 +212,14 @@ public class Game<G> where G : class, IArcadianGame<G>
                 ImGui.EndMenu();
             }
 
+            if (ImGui.BeginMenu("Debug"))
+            {
+                ImGui.MenuItem("Inspector", null, ref DrawWorldInspector);
+                ImGui.MenuItem("Console", null, ref DrawConsole);
+
+                ImGui.EndMenu();
+            }
+
             string fps_label = $"{Raylib.GetFPS()} FPS";
             float text_width = ImGui.CalcTextSize(fps_label).X;
             ImGui.SetCursorPosX(ImGui.GetWindowWidth() - text_width - ImGui.GetStyle().ItemSpacing.X);
@@ -216,8 +228,10 @@ public class Game<G> where G : class, IArcadianGame<G>
             ImGui.EndMainMenuBar();
         }
 
-        context.GetResource<WorldHierarchyDebug<G>>().Draw();
-        // ImGui.ShowDemoWindow();
+        if (DrawWorldInspector)
+            context.GetResource<WorldHierarchyDebug<G>>().Draw();
+        if (DrawConsole)
+            context.GetResource<ImGuiConsole>().Draw();
 #endif
 
         ImGuiRaylibBackend.End();
