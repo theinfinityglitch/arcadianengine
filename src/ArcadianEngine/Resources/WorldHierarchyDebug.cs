@@ -88,7 +88,7 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
             ImGui.SetNextWindowSize(new Vector2(300, 200), ImGuiCond.FirstUseEver);
 
             if (ImGui.Begin(title, ref open))
-                DrawComponentInspector(entity, type);
+                DrawComponentInspector(type.Name, entity, type);
 
             ImGui.End();
 
@@ -240,7 +240,7 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
                     if (open)
                     {
                         ImGui.Indent();
-                        DrawComponentInspector(entity, type);
+                        DrawComponentInspector(type.Name, entity, type);
                         ImGui.Unindent();
                     }
                 }
@@ -297,7 +297,7 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         foreach (var field in fields)
         {
             var value = field.GetValue(resource);
-            var result = DrawEditableField(field.Name, value);
+            var result = DrawEditableField(resource_name, field.Name, value);
             if (result.modified)
                 field.SetValue(resource, result.value);
         }
@@ -311,7 +311,7 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         }
     }
 
-    private void DrawComponentInspector(Entity entity, Type componentType)
+    private void DrawComponentInspector(string componentName, Entity entity, Type componentType)
     {
         var getMethod = typeof(Entity)
             .GetMethods()
@@ -331,7 +331,7 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         foreach (var field in componentType.GetFields(BindingFlags.Public | BindingFlags.Instance))
         {
             var value = field.GetValue(component);
-            var result = DrawEditableField(field.Name, value);
+            var result = DrawEditableField(componentName, field.Name, value);
 
             if (result.modified)
             {
@@ -365,13 +365,14 @@ public partial class WorldHierarchyDebug<G>(GameContext<G> cx) where G : class, 
         entity.Set(typed); // called generically, no ref issues
     }
 
-    private (bool modified, object? value) DrawEditableField(string name, object? value)
+    private (bool modified, object? value) DrawEditableField(string differentialName, string name, object? value)
     {
         // 1. Insert spaces before every capital letter
         string spaced = FieldRegex().Replace(name, " $1").Trim();
 
         // 2. Capitalize the first letter of the entire string
-        string field_name = char.ToUpper(spaced[0]) + spaced.Substring(1);
+        string field_name = char.ToUpper(spaced[0]) + spaced[1..];
+        field_name += $"##{differentialName}";
 
         switch (value)
         {

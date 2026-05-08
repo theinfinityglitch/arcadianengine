@@ -11,6 +11,7 @@ using ArcadianEngine.StateMachines;
 using System.Runtime.InteropServices;
 
 using IconFonts;
+using ArcadianEngine.Systems;
 
 namespace ArcadianEngine;
 
@@ -49,6 +50,8 @@ public class Game<G> where G : class, IArcadianGame<G>
         context.InsertResource(new MainScheduleOrder<G>(context));
         context.InsertResource(new RenderPipeline(windowSize));
         context.InsertResource(new WorldHierarchyDebug<G>(context));
+
+        context.GetResource<MainScheduleOrder<G>>().InsertSystem<PostUpdate, TransformPropagationSystem>(new TransformPropagationSystem());
     }
 
     /// <summary>
@@ -69,6 +72,7 @@ public class Game<G> where G : class, IArcadianGame<G>
             var style = ImGui.GetStyle();
             style.ScaleAllSizes(dpiScale);
             style.FramePadding = new(ImGui.GetStyle().FramePadding.X, 4.0f * Raylib.GetWindowScaleDPI().X);
+            style.TabRounding = 0.0f;
             ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
             LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
             LoadEmbeddedIconFont("lucide.ttf", 12.0f * dpiScale, Lucide.IconMin, Lucide.IconMax);
