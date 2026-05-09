@@ -315,7 +315,10 @@ public static class ImGuiRaylibBackend
         if (io.WantSetMousePos)
             Raylib.SetMousePosition((int)io.MousePos.X, (int)io.MousePos.Y);
         else
-            io.AddMousePosEvent(Raylib.GetMouseX() * io.DisplayFramebufferScale.X, Raylib.GetMouseY() * io.DisplayFramebufferScale.Y);
+            io.AddMousePosEvent(
+                Raylib.GetMouseX() * io.DisplayFramebufferScale.X,
+                Raylib.GetMouseY() * io.DisplayFramebufferScale.Y
+            );
 
         SetMouseEvent(io, MouseButton.Left, ImGuiMouseButton.Left);
         SetMouseEvent(io, MouseButton.Right, ImGuiMouseButton.Right);
@@ -479,7 +482,12 @@ public static class ImGuiRaylibBackend
         Rlgl.EnableScissorTest();
         ImGuiIOPtr io = ImGui.GetIO();
 
-        Rlgl.Scissor((int)x, (int)(io.DisplaySize.Y - (int)(y + height)), (int)width, (int)height);
+        Rlgl.Scissor(
+            (int)x,
+            (int)(io.DisplaySize.Y - (y + height)),
+            (int)width,
+            (int)height
+        );
     }
 
     private static void TriangleVert(ImDrawVertPtr idx_vert)
@@ -544,7 +552,12 @@ public static class ImGuiRaylibBackend
             {
                 var cmd = commandList.CmdBuffer[cmdIndex];
 
-                EnableScissor(cmd.ClipRect.X - data.DisplayPos.X, cmd.ClipRect.Y - data.DisplayPos.Y, cmd.ClipRect.Z - (cmd.ClipRect.X - data.DisplaySize.X), cmd.ClipRect.W - (cmd.ClipRect.Y - data.DisplaySize.Y));
+                EnableScissor(
+                    cmd.ClipRect.X - data.DisplayPos.X,
+                    cmd.ClipRect.Y - data.DisplayPos.Y,
+                    cmd.ClipRect.Z - cmd.ClipRect.X,
+                    cmd.ClipRect.W - cmd.ClipRect.Y
+                );
                 if (cmd.UserCallback != IntPtr.Zero)
                 {
                     Callback cb = Marshal.GetDelegateForFunctionPointer<Callback>(cmd.UserCallback);
