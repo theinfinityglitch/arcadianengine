@@ -1,4 +1,5 @@
 using ArcadianEngine.Core;
+using ArcadianEngine.Exceptions;
 
 namespace ArcadianEngine.StateMachines;
 
@@ -7,75 +8,53 @@ public class LinearStateMachine<G>(string stateMachineName, GameContext<G> cx) :
     protected string _defaultStateName = "";
     protected string _currentStateName = "";
 
-    public virtual void AddState<T>(T state) where T : State<G>
+    public override void AddState<T>(T state)
     {
-        string stateName = typeof(T).Name;
-
         if (_states.Count == 0)
         {
-            _defaultStateName = stateName;
+            _defaultStateName = typeof(T).Name;
         }
 
-        _states.Add(stateName, state);
-        state.SetOwnerStateMachine(this, context);
+        base.AddState(state);
     }
 
-    public virtual void Initialize()
+    public override void Initialize()
     {
         ChangeState(_defaultStateName);
+
+        base.Initialize();
     }
 
     public virtual void ChangeState(string stateName)
     {
-        if (stateName == _currentStateName || stateName == "" || !_states.ContainsKey(stateName))
-        {
-            return;
-        }
+        if (!_states.ContainsKey(stateName) || stateName == "") throw new StateNotFoundException(stateMachineName, stateName);
+        if (stateName == _currentStateName) throw new EmptyStateNameException(stateMachineName);
 
         Console.WriteLine($"Set state {stateMachineName}::{stateName}");
 
-        if (_currentStateName != "")
-            _states[_currentStateName].OnExit(context);
+        if (_currentStateName != "") _states[_currentStateName].OnExit();
         _currentStateName = stateName;
-        _states[_currentStateName].OnEnter(context);
+        _states[_currentStateName].OnEnter();
     }
 
-    public virtual int HandleInput()
+    public override void HandleInput()
     {
-        if (_states.Count == 0)
-        {
-            Console.WriteLine($"No states found for {stateMachineName}.");
-            return 1;
-        }
+        base.HandleInput();
 
-        _states[_currentStateName].OnHandleInput(context);
-
-        return 0;
+        _states[_currentStateName].OnHandleInput();
     }
 
-    public virtual int Update(float deltaTime)
+    public override void Update(float deltaTime)
     {
-        if (_states.Count == 0)
-        {
-            Console.WriteLine($"No states found for {stateMachineName}.");
-            return 1;
-        }
+        base.Update(deltaTime);
 
-        _states[_currentStateName].OnUpdate(deltaTime, context);
-
-        return 0;
+        _states[_currentStateName].OnUpdate(deltaTime);
     }
 
-    public virtual int Draw()
+    public override void Draw()
     {
-        if (_states.Count == 0)
-        {
-            Console.WriteLine($"No states found for {stateMachineName}.");
-            return 1;
-        }
+        base.Draw();
 
-        _states[_currentStateName].OnDraw(context);
-
-        return 0;
+        _states[_currentStateName].OnDraw();
     }
 }
