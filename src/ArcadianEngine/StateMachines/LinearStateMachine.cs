@@ -20,7 +20,7 @@ public class LinearStateMachine<G>(string stateMachineName, GameContext<G> cx) :
 
     public override void Initialize()
     {
-        ChangeState(_defaultStateName);
+        if (_defaultStateName != "") ChangeState(_defaultStateName);
 
         base.Initialize();
     }
@@ -39,6 +39,8 @@ public class LinearStateMachine<G>(string stateMachineName, GameContext<G> cx) :
 
     public override void HandleInput()
     {
+        if (_currentStateName == "") return;
+
         base.HandleInput();
 
         _states[_currentStateName].OnHandleInput();
@@ -46,6 +48,8 @@ public class LinearStateMachine<G>(string stateMachineName, GameContext<G> cx) :
 
     public override void Update(float deltaTime)
     {
+        if (_currentStateName == "") return;
+
         base.Update(deltaTime);
 
         _states[_currentStateName].OnUpdate(deltaTime);
@@ -53,6 +57,8 @@ public class LinearStateMachine<G>(string stateMachineName, GameContext<G> cx) :
 
     public override void Draw()
     {
+        if (_currentStateName == "") return;
+
         base.Draw();
 
         _states[_currentStateName].OnDraw();
