@@ -50,6 +50,9 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
     public TRes GetResource<TRes>() where TRes : class
         => Game.resource_container.GetResource<TRes>();
 
+    public bool TryGetResource<TRes>(out TRes? resource) where TRes : class
+        => Game.resource_container.TryGetResource<TRes>(out resource);
+
     public IReadOnlyDictionary<Type, object> GetAllResources()
         => Game.resource_container.GetAllResources();
 

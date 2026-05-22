@@ -51,7 +51,7 @@ public class Game<G> where G : class, IArcadianGame<G>
 #endif
 
         context.InsertResource(new MainScheduleOrder<G>(context));
-        context.InsertResource(new RenderPipeline(windowSize));
+        // context.InsertResource(new RenderPipeline(windowSize));
         context.InsertResource(new WorldHierarchyDebug<G>(context));
         context.InsertResource(new ImGuiConsole());
 
@@ -181,13 +181,15 @@ public class Game<G> where G : class, IArcadianGame<G>
         context.GetResource<MainScheduleOrder<G>>().Run();
         gameStateMachine.Draw();
 
-        var rp = context.GetResource<RenderPipeline>();
+        context.TryGetResource<RenderPipeline>(out var rp);
 
-        var frame = rp.Flush();
+        RenderTexture2D frame = new();
+
+        if (rp != null) frame = rp.Flush();
 
         Raylib.BeginDrawing();
 
-        rp.PresentToScreen(frame);
+        rp?.PresentToScreen(frame);
 
         // Setup the ImGui dockspace
         ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
