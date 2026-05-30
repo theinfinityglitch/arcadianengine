@@ -8,7 +8,7 @@ public class ImGuiConsoleWriter(int maxLines = 200) : TextWriter
     private string _currentLine = "";
     private readonly int _maxLines = maxLines;
 
-    public IReadOnlyList<string> Lines => _lines;
+    public IReadOnlyList<string> lines => _lines;
     public bool ScrollToBottom;
 
     public override Encoding Encoding => Encoding.UTF8;
@@ -32,7 +32,7 @@ public class ImGuiConsoleWriter(int maxLines = 200) : TextWriter
     public override void Write(string? value)
     {
         if (value == null) return;
-        foreach (char c in value)
+        foreach (var c in value)
             Write(c);
     }
 }

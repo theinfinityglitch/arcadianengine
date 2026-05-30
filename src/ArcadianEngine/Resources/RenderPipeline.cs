@@ -1,24 +1,22 @@
 using System.Numerics;
-
-using Raylib_cs;
-
 using ArcadianEngine.Drawing;
 using ArcadianEngine.Math;
+using Raylib_cs;
 
 namespace ArcadianEngine.Resources;
 
-public class RenderPipeline(Vector2i virtualSize)
+public class RenderPipeline(Vector2I virtualSize)
 {
     private readonly SortedDictionary<int, List<DrawCommand>> _commands = [];
     private readonly Dictionary<int, RenderTexture2D> _layerTextures = [];
 
-    [Export] public Vector2i virtualSize = virtualSize;
+    [Export] public Vector2I VirtualSize = virtualSize;
 
     public void Draw(DrawCommand command)
     {
-        if (!_commands.ContainsKey(command.Layer))
-            _commands[command.Layer] = [];
-        _commands[command.Layer].Add(command);
+        if (!_commands.ContainsKey(command.layer))
+            _commands[command.layer] = [];
+        _commands[command.layer].Add(command);
     }
 
     public void DrawSprite(Texture2D tex, Vector2 pos, int layer = 0, Color? tint = null)
@@ -33,12 +31,12 @@ public class RenderPipeline(Vector2i virtualSize)
     public void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color, int layer)
         => Draw(new DrawRingCommand(layer, center, innerRadius, outerRadius, startAngle, endAngle, segments, color));
 
-    protected RenderTexture2D GetOrCreateLayerTexture(int layer)
+    private RenderTexture2D GetOrCreateLayerTexture(int layer)
     {
         if (_layerTextures.TryGetValue(layer, out var texture))
             return texture;
 
-        var newTexture = Raylib.LoadRenderTexture(virtualSize.X, virtualSize.Y);
+        var newTexture = Raylib.LoadRenderTexture(VirtualSize.X, VirtualSize.Y);
         _layerTextures[layer] = newTexture;
         return newTexture;
     }
@@ -46,7 +44,7 @@ public class RenderPipeline(Vector2i virtualSize)
     public RenderTexture2D Flush()
     {
         // Final composed texture
-        var output = Raylib.LoadRenderTexture(virtualSize.X, virtualSize.Y);
+        var output = Raylib.LoadRenderTexture(VirtualSize.X, VirtualSize.Y);
 
         Raylib.BeginTextureMode(output);
         Raylib.ClearBackground(Color.Black);
@@ -69,7 +67,7 @@ public class RenderPipeline(Vector2i virtualSize)
             Raylib.BeginTextureMode(output);
             Raylib.DrawTextureRec(
                 layerTex.Texture,
-                new Rectangle(0, 0, virtualSize.X, -virtualSize.Y), // flip Y
+                new Rectangle(0, 0, VirtualSize.X, -VirtualSize.Y), // flip Y
                 Vector2.Zero,
                 Color.White
             );
@@ -83,24 +81,24 @@ public class RenderPipeline(Vector2i virtualSize)
 
     public void PresentToScreen(RenderTexture2D frame)
     {
-        int screenW = Raylib.GetRenderWidth();
-        int screenH = Raylib.GetRenderHeight();
+        var screenW = Raylib.GetRenderWidth();
+        var screenH = Raylib.GetRenderHeight();
 
-        float scale = System.Math.Min(
-            (float)screenW / virtualSize.X,
-            (float)screenH / virtualSize.Y
+        var scale = System.Math.Min(
+            (float)screenW / VirtualSize.X,
+            (float)screenH / VirtualSize.Y
         );
 
-        int destW = (int)(virtualSize.X * scale);
-        int destH = (int)(virtualSize.Y * scale);
-        int offsetX = (screenW - destW) / 2;
-        int offsetY = (screenH - destH) / 2;
+        var destW = (int)(VirtualSize.X * scale);
+        var destH = (int)(VirtualSize.Y * scale);
+        var offsetX = (screenW - destW) / 2;
+        var offsetY = (screenH - destH) / 2;
 
         Raylib.ClearBackground(Color.Black); // letterbox color
 
         Raylib.DrawTexturePro(
             frame.Texture,
-            new Rectangle(0, 0, virtualSize.X, -virtualSize.Y), // flip Y
+            new Rectangle(0, 0, VirtualSize.X, -VirtualSize.Y), // flip Y
             new Rectangle(offsetX, offsetY, destW, destH),
             Vector2.Zero,
             0f,

@@ -1,9 +1,7 @@
 using System.Numerics;
-
-using ImGuiNET;
-using IconFonts;
-
 using ArcadianEngine.Utils;
+using IconFonts;
+using ImGuiNET;
 
 public class ImGuiConsole
 {
@@ -30,14 +28,14 @@ public class ImGuiConsole
         ImGui.Checkbox("Auto scroll", ref _autoScroll);
         ImGui.SameLine();
         if (ImGui.SmallButton($"{Lucide.Trash} Clear"))
-            _writer.Lines.ToList().Clear(); // or expose a Clear() on the writer
+            _writer.lines.ToList().Clear(); // or expose a Clear() on the writer
 
         ImGui.Separator();
 
         // Scrollable log region
         ImGui.BeginChild("ConsoleScrollRegion", new Vector2(0, 0), ImGuiChildFlags.None);
 
-        foreach (var line in _writer.Lines)
+        foreach (var line in _writer.lines)
         {
             // Color code lines based on prefix
             if (line.StartsWith("[ERR]"))

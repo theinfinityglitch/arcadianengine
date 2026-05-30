@@ -1,11 +1,11 @@
 ﻿namespace ArcadianEngine.Core;
 
-public class State<G> where G : class, IArcadianGame<G>
+public class State<TG> where TG : class, IArcadianGame<TG>
 {
-    protected StateMachine<G>? _ownerStateMachine = null;
+    protected StateMachine<TG>? OwnerStateMachine;
 
 #pragma warning disable CS8618
-    public GameContext<G> Context;
+    public GameContext<TG> Context;
 #pragma warning restore CS8618
 
     public virtual void OnEnter() { }
@@ -20,9 +20,9 @@ public class State<G> where G : class, IArcadianGame<G>
 
     public virtual void OnExit() { }
 
-    public void SetOwnerStateMachine(StateMachine<G> owner)
+    public void SetOwnerStateMachine(StateMachine<TG> owner)
     {
-        this._ownerStateMachine = owner;
+        OwnerStateMachine = owner;
         OnOwnerSet();
     }
 }

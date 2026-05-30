@@ -1,19 +1,17 @@
-﻿using Friflo.Engine.ECS.Systems;
-using Raylib_cs;
-
-using ArcadianEngine.Core;
+﻿using ArcadianEngine.Core;
 using ArcadianEngine.Resources;
-using System.Runtime.InteropServices;
+using Friflo.Engine.ECS.Systems;
+using Raylib_cs;
 
 namespace ArcadianEngine;
 
-public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
+public class GameContext<TG>(Game<TG> game) where TG : class, IArcadianGame<TG>
 {
-    public Game<G> Game { get; private set; } = game;
+    public Game<TG> game { get; private set; } = game;
 
     public void Quit()
     {
-        Game.shouldClose = true;
+        game.ShouldClose = true;
     }
 
     public bool IsBorderlessWindow()
@@ -21,7 +19,7 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
         return Raylib.IsWindowState(ConfigFlags.BorderlessWindowMode);
     }
 
-    public void TogleBorderlessWindow()
+    public void ToggleBorderlessWindow()
     {
         Raylib.ToggleBorderlessWindowed();
 
@@ -29,36 +27,36 @@ public class GameContext<G>(Game<G> game) where G : class, IArcadianGame<G>
             Raylib.ClearWindowState(ConfigFlags.TopmostWindow);
     }
 
-    public void InsertGameState<T>(T state) where T : State<G>, new()
+    public void InsertGameState<T>(T state) where T : State<TG>, new()
     {
-        Game.gameStateMachine.AddState(state);
+        game.GameStateMachine.AddState(state);
     }
 
-    public SystemType InsertSystem<Schedule, SystemType>(SystemType system) where Schedule : struct, ISchedule where SystemType : BaseSystem
+    public TSystemType InsertSystem<TSchedule, TSystemType>(TSystemType system) where TSchedule : struct, ISchedule where TSystemType : BaseSystem
     {
-        return GetResource<MainScheduleOrder<G>>().InsertSystem<Schedule, SystemType>(system);
+        return GetResource<MainScheduleOrder<TG>>().InsertSystem<TSchedule, TSystemType>(system);
     }
 
     public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
     {
-        GetResource<MainScheduleOrder<G>>().RemoveSystem<T>(system);
+        GetResource<MainScheduleOrder<TG>>().RemoveSystem<T>(system);
     }
 
     public void InsertResource<TRes>(TRes resource) where TRes : class
-        => Game.resource_container.InsertResource(resource);
+        => game.ResourceContainer.InsertResource(resource);
 
     public TRes GetResource<TRes>() where TRes : class
-        => Game.resource_container.GetResource<TRes>();
+        => game.ResourceContainer.GetResource<TRes>();
 
     public bool TryGetResource<TRes>(out TRes? resource) where TRes : class
-        => Game.resource_container.TryGetResource<TRes>(out resource);
+        => game.ResourceContainer.TryGetResource(out resource);
 
     public IReadOnlyDictionary<Type, object> GetAllResources()
-        => Game.resource_container.GetAllResources();
+        => game.ResourceContainer.GetAllResources();
 
     public TRes GetResource<TRes>(Action<TRes> actions) where TRes : class
     {
-        TRes resource = GetResource<TRes>();
+        var resource = GetResource<TRes>();
 
         actions(resource);
 

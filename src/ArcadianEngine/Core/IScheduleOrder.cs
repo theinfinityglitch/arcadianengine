@@ -1,15 +1,14 @@
-using Friflo.Engine.ECS;
 using Friflo.Engine.ECS.Systems;
 
 namespace ArcadianEngine.Core;
 
-public class IScheduleOrder
+public class ScheduleOrder
 {
     public virtual void InsertSchedule<T>() where T : struct, ISchedule { }
 
     public virtual void RemoveSchedule<T>() where T : struct, ISchedule { }
 
-    public virtual SystemType InsertSystem<Schedule, SystemType>(SystemType system) where Schedule : struct, ISchedule where SystemType : BaseSystem
+    public virtual TSystemType InsertSystem<TSchedule, TSystemType>(TSystemType system) where TSchedule : struct, ISchedule where TSystemType : BaseSystem
     {
         throw new InvalidOperationException($"InsertSystem function not implemented for {GetType().Name}");
     }

@@ -1,9 +1,7 @@
 using System.Numerics;
-
+using ArcadianEngine.Components;
 using Friflo.Engine.ECS;
 using Friflo.Engine.ECS.Systems;
-
-using ArcadianEngine.Components;
 
 namespace ArcadianEngine.Systems;
 
@@ -53,8 +51,8 @@ public class TransformPropagationSystem : QuerySystem<Transform2D>
         }
         else
         {
-            float cos = MathF.Cos(parentTransform.Value.Rotation);
-            float sin = MathF.Sin(parentTransform.Value.Rotation);
+            var cos = MathF.Cos(parentTransform.Value.Rotation);
+            var sin = MathF.Sin(parentTransform.Value.Rotation);
 
             transform.GlobalPosition = parentTransform.Value.Position + new Vector2(
                 transform.Position.X * cos - transform.Position.Y * sin,

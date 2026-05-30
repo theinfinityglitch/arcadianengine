@@ -2,39 +2,39 @@
 
 namespace ArcadianEngine.Core;
 
-public class StateMachine<G>(string stateMachineName, GameContext<G> cx) where G : class, IArcadianGame<G>
+public class StateMachine<TG>(string stateMachineName, GameContext<TG> cx) where TG : class, IArcadianGame<TG>
 {
-    public readonly string stateMachineName = stateMachineName;
+    public readonly string StateMachineName = stateMachineName;
 
-    protected Dictionary<string, State<G>> _states = [];
-    protected GameContext<G> Context = cx;
-    protected bool Initialized = false;
+    protected Dictionary<string, State<TG>> States = [];
+    protected GameContext<TG> Context = cx;
+    protected bool Initialized;
 
-    public virtual void AddState<T>(T state) where T : State<G>
+    public virtual void AddState<T>(T state) where T : State<TG>
     {
-        string stateName = typeof(T).Name;
+        var stateName = typeof(T).Name;
         state.Context = Context;
         state.SetOwnerStateMachine(this);
-        _states.Add(stateName, state);
+        States.Add(stateName, state);
     }
 
     public virtual void Initialize() { Initialized = true; }
 
     public virtual void HandleInput()
     {
-        if (_states.Count == 0) throw new EmptyStateMachineException(stateMachineName);
-        if (!Initialized) throw new StateMachineNotInitializedException(stateMachineName);
+        if (States.Count == 0) throw new EmptyStateMachineException(StateMachineName);
+        if (!Initialized) throw new StateMachineNotInitializedException(StateMachineName);
     }
 
     public virtual void Update(float deltaTime)
     {
-        if (_states.Count == 0) throw new EmptyStateMachineException(stateMachineName);
-        if (!Initialized) throw new StateMachineNotInitializedException(stateMachineName);
+        if (States.Count == 0) throw new EmptyStateMachineException(StateMachineName);
+        if (!Initialized) throw new StateMachineNotInitializedException(StateMachineName);
     }
 
     public virtual void Draw()
     {
-        if (_states.Count == 0) throw new EmptyStateMachineException(stateMachineName);
-        if (!Initialized) throw new StateMachineNotInitializedException(stateMachineName);
+        if (States.Count == 0) throw new EmptyStateMachineException(StateMachineName);
+        if (!Initialized) throw new StateMachineNotInitializedException(StateMachineName);
     }
 }

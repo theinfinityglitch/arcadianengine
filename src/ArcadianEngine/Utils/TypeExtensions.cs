@@ -8,7 +8,7 @@ public static class TypeExtensions
             return type.Name;
 
         // Remove the `n suffix
-        string baseName = type.Name[..type.Name.IndexOf('`')];
+        var baseName = type.Name[..type.Name.IndexOf('`')];
 
         // Get generic arguments and format them
         var genericArgs = type.GetGenericArguments()

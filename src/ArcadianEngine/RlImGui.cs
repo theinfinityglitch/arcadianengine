@@ -1,8 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
-
-using Raylib_cs;
 using ImGuiNET;
+using Raylib_cs;
 
 namespace ArcadianEngine;
 
@@ -11,18 +10,18 @@ public static class ImGuiRaylibBackend
     public static bool LoadDefaultFont = true;
     internal static IntPtr ImGuiContext = IntPtr.Zero;
 
-    private static ImGuiMouseCursor CurrentMouseCursor = ImGuiMouseCursor.COUNT;
-    private static Dictionary<ImGuiMouseCursor, MouseCursor> MouseCursorMap = [];
-    private static Texture2D FontTexture;
+    private static ImGuiMouseCursor _currentMouseCursor = ImGuiMouseCursor.COUNT;
+    private static Dictionary<ImGuiMouseCursor, MouseCursor> _mouseCursorMap = [];
+    private static Texture2D _fontTexture;
 
     static readonly Dictionary<KeyboardKey, ImGuiKey> RaylibKeyMap = [];
 
-    internal static bool LastFrameFocused = false;
+    internal static bool LastFrameFocused;
 
-    internal static bool LastControlPressed = false;
-    internal static bool LastShiftPressed = false;
-    internal static bool LastAltPressed = false;
-    internal static bool LastSuperPressed = false;
+    internal static bool LastControlPressed;
+    internal static bool LastShiftPressed;
+    internal static bool LastAltPressed;
+    internal static bool LastSuperPressed;
 
     public delegate void SetupUserFontsCallback(ImGuiIOPtr imGuiIo);
 
@@ -33,8 +32,8 @@ public static class ImGuiRaylibBackend
     private unsafe delegate sbyte* GetClipTextCallback(IntPtr userData);
     private unsafe delegate void SetClipTextCallback(IntPtr userData, sbyte* text);
 
-    private static GetClipTextCallback GetClipCallback = null!;
-    private static SetClipTextCallback SetClipCallback = null!;
+    private static GetClipTextCallback _getClipCallback = null!;
+    private static SetClipTextCallback _setClipCallback = null!;
 
     internal static bool RlImGuiIsControlDown()
         => Raylib.IsKeyDown(KeyboardKey.RightControl) || Raylib.IsKeyDown(KeyboardKey.LeftControl);
@@ -66,7 +65,7 @@ public static class ImGuiRaylibBackend
     /// </summary>
     public static void BeginInitImGui()
     {
-        MouseCursorMap = [];
+        _mouseCursorMap = [];
 
         LastFrameFocused = Raylib.IsWindowFocused();
         LastControlPressed = false;
@@ -74,7 +73,7 @@ public static class ImGuiRaylibBackend
         LastAltPressed = false;
         LastSuperPressed = false;
 
-        FontTexture.Id = 0;
+        _fontTexture.Id = 0;
 
         SetupKeymap();
 
@@ -96,9 +95,9 @@ public static class ImGuiRaylibBackend
         if (LoadDefaultFont)
             ImGui.GetIO().Fonts.AddFontDefault();
 
-        ImGuiIOPtr io = ImGui.GetIO();
+        var io = ImGui.GetIO();
 
-        ImGuiPlatformIOPtr platformIO = ImGui.GetPlatformIO();
+        var platformIo = ImGui.GetPlatformIO();
 
         SetupUserFonts?.Invoke(io);
 
@@ -110,14 +109,14 @@ public static class ImGuiRaylibBackend
         // copy/paste callbacks
         unsafe
         {
-            SetClipCallback = new SetClipTextCallback(RlImGuiSetClipText);
-            platformIO.Platform_SetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(SetClipCallback);
+            _setClipCallback = RlImGuiSetClipText;
+            platformIo.Platform_SetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(_setClipCallback);
 
-            GetClipCallback = new GetClipTextCallback(RImGuiGetClipText);
-            platformIO.Platform_GetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(GetClipCallback);
+            _getClipCallback = RImGuiGetClipText;
+            platformIo.Platform_GetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(_getClipCallback);
         }
 
-        platformIO.Platform_ClipboardUserData = IntPtr.Zero;
+        platformIo.Platform_ClipboardUserData = IntPtr.Zero;
         ReloadFonts();
     }
 
@@ -236,16 +235,16 @@ public static class ImGuiRaylibBackend
 
     private static void SetupMouseCursors()
     {
-        MouseCursorMap.Clear();
-        MouseCursorMap[ImGuiMouseCursor.Arrow] = MouseCursor.Arrow;
-        MouseCursorMap[ImGuiMouseCursor.TextInput] = MouseCursor.IBeam;
-        MouseCursorMap[ImGuiMouseCursor.Hand] = MouseCursor.PointingHand;
-        MouseCursorMap[ImGuiMouseCursor.ResizeAll] = MouseCursor.ResizeAll;
-        MouseCursorMap[ImGuiMouseCursor.ResizeEW] = MouseCursor.ResizeEw;
-        MouseCursorMap[ImGuiMouseCursor.ResizeNESW] = MouseCursor.ResizeNesw;
-        MouseCursorMap[ImGuiMouseCursor.ResizeNS] = MouseCursor.ResizeNs;
-        MouseCursorMap[ImGuiMouseCursor.ResizeNWSE] = MouseCursor.ResizeNwse;
-        MouseCursorMap[ImGuiMouseCursor.NotAllowed] = MouseCursor.NotAllowed;
+        _mouseCursorMap.Clear();
+        _mouseCursorMap[ImGuiMouseCursor.Arrow] = MouseCursor.Arrow;
+        _mouseCursorMap[ImGuiMouseCursor.TextInput] = MouseCursor.IBeam;
+        _mouseCursorMap[ImGuiMouseCursor.Hand] = MouseCursor.PointingHand;
+        _mouseCursorMap[ImGuiMouseCursor.ResizeAll] = MouseCursor.ResizeAll;
+        _mouseCursorMap[ImGuiMouseCursor.ResizeEW] = MouseCursor.ResizeEw;
+        _mouseCursorMap[ImGuiMouseCursor.ResizeNESW] = MouseCursor.ResizeNesw;
+        _mouseCursorMap[ImGuiMouseCursor.ResizeNS] = MouseCursor.ResizeNs;
+        _mouseCursorMap[ImGuiMouseCursor.ResizeNWSE] = MouseCursor.ResizeNwse;
+        _mouseCursorMap[ImGuiMouseCursor.NotAllowed] = MouseCursor.NotAllowed;
     }
 
     /// <summary>
@@ -254,9 +253,9 @@ public static class ImGuiRaylibBackend
     public static unsafe void ReloadFonts()
     {
         ImGui.SetCurrentContext(ImGuiContext);
-        ImGuiIOPtr io = ImGui.GetIO();
+        var io = ImGui.GetIO();
 
-        io.Fonts.GetTexDataAsRGBA32(out byte* pixels, out int width, out int height, out int bytesPerPixel);
+        io.Fonts.GetTexDataAsRGBA32(out byte* pixels, out var width, out var height, out var bytesPerPixel);
 
         Image image = new()
         {
@@ -267,12 +266,12 @@ public static class ImGuiRaylibBackend
             Format = PixelFormat.UncompressedR8G8B8A8,
         };
 
-        if (Raylib.IsTextureValid(FontTexture))
-            Raylib.UnloadTexture(FontTexture);
+        if (Raylib.IsTextureValid(_fontTexture))
+            Raylib.UnloadTexture(_fontTexture);
 
-        FontTexture = Raylib.LoadTextureFromImage(image);
+        _fontTexture = Raylib.LoadTextureFromImage(image);
 
-        io.Fonts.SetTexID(new IntPtr(FontTexture.Id));
+        io.Fonts.SetTexID(new IntPtr(_fontTexture.Id));
     }
 
     unsafe internal static sbyte* RImGuiGetClipText(IntPtr userData)
@@ -295,17 +294,17 @@ public static class ImGuiRaylibBackend
 
     private static void NewFrame(float dt = -1)
     {
-        ImGuiIOPtr io = ImGui.GetIO();
+        var io = ImGui.GetIO();
 
         if (Raylib.IsWindowFullscreen())
         {
-            int monitor = Raylib.GetCurrentMonitor();
-            io.DisplaySize = new(Raylib.GetMonitorWidth(monitor), Raylib.GetMonitorHeight(monitor));
+            var monitor = Raylib.GetCurrentMonitor();
+            io.DisplaySize = new Vector2(Raylib.GetMonitorWidth(monitor), Raylib.GetMonitorHeight(monitor));
         }
         else
-            io.DisplaySize = new(Raylib.GetRenderWidth(), Raylib.GetRenderHeight());
+            io.DisplaySize = new Vector2(Raylib.GetRenderWidth(), Raylib.GetRenderHeight());
 
-        io.DisplayFramebufferScale = new(1.0f, 1.0f);
+        io.DisplayFramebufferScale = new Vector2(1.0f, 1.0f);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || Raylib.IsWindowState(ConfigFlags.HighDpiWindow))
             io.DisplayFramebufferScale = Raylib.GetWindowScaleDPI();
@@ -331,11 +330,11 @@ public static class ImGuiRaylibBackend
 
         if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) == 0)
         {
-            ImGuiMouseCursor imgui_cursor = ImGui.GetMouseCursor();
-            if (imgui_cursor != CurrentMouseCursor || io.MouseDrawCursor)
+            var imguiCursor = ImGui.GetMouseCursor();
+            if (imguiCursor != _currentMouseCursor || io.MouseDrawCursor)
             {
-                CurrentMouseCursor = imgui_cursor;
-                if (io.MouseDrawCursor || imgui_cursor == ImGuiMouseCursor.None)
+                _currentMouseCursor = imguiCursor;
+                if (io.MouseDrawCursor || imguiCursor == ImGuiMouseCursor.None)
                     Raylib.HideCursor();
                 else
                 {
@@ -344,10 +343,10 @@ public static class ImGuiRaylibBackend
                     if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) == 0)
                     {
 
-                        if (!MouseCursorMap.ContainsKey(imgui_cursor))
+                        if (!_mouseCursorMap.ContainsKey(imguiCursor))
                             Raylib.SetMouseCursor(MouseCursor.Default);
                         else
-                            Raylib.SetMouseCursor(MouseCursorMap[imgui_cursor]);
+                            Raylib.SetMouseCursor(_mouseCursorMap[imguiCursor]);
                     }
                 }
             }
@@ -356,7 +355,7 @@ public static class ImGuiRaylibBackend
 
     private static void FrameEvents()
     {
-        ImGuiIOPtr io = ImGui.GetIO();
+        var io = ImGui.GetIO();
 
         bool focused = Raylib.IsWindowFocused();
 
@@ -366,10 +365,10 @@ public static class ImGuiRaylibBackend
         LastFrameFocused = focused;
 
         // handle the modifyer key events so that shortcuts work
-        bool ctrlDown = RlImGuiIsControlDown();
-        bool shiftDown = RlImGuiIsShiftDown();
-        bool altDown = RlImGuiIsAltDown();
-        bool superDown = RlImGuiIsSuperDown();
+        var ctrlDown = RlImGuiIsControlDown();
+        var shiftDown = RlImGuiIsShiftDown();
+        var altDown = RlImGuiIsAltDown();
+        var superDown = RlImGuiIsSuperDown();
 
         if (ctrlDown != LastControlPressed)
             io.AddKeyEvent(ImGuiKey.ModCtrl, ctrlDown);
@@ -386,11 +385,11 @@ public static class ImGuiRaylibBackend
         LastSuperPressed = superDown;
 
         // get the pressed keys, they are in event order
-        int keyId = Raylib.GetKeyPressed();
+        var keyId = Raylib.GetKeyPressed();
 
         while (keyId != 0)
         {
-            KeyboardKey key = (KeyboardKey)keyId;
+            var key = (KeyboardKey)keyId;
 
             if (RaylibKeyMap.ContainsKey(key))
                 io.AddKeyEvent(RaylibKeyMap[key], true);
@@ -458,7 +457,7 @@ public static class ImGuiRaylibBackend
     {
         const float deadZone = 0.20f;
 
-        float axisValue = Raylib.GetGamepadAxisMovement(0, axis);
+        var axisValue = Raylib.GetGamepadAxisMovement(0, axis);
 
         io.AddKeyAnalogEvent(negKey, axisValue < -deadZone, axisValue < -deadZone ? -axisValue : 0);
         io.AddKeyAnalogEvent(posKey, axisValue > deadZone, axisValue > deadZone ? axisValue : 0);
@@ -480,7 +479,7 @@ public static class ImGuiRaylibBackend
     private static void EnableScissor(float x, float y, float width, float height)
     {
         Rlgl.EnableScissorTest();
-        ImGuiIOPtr io = ImGui.GetIO();
+        var io = ImGui.GetIO();
 
         Rlgl.Scissor(
             (int)x,
@@ -490,13 +489,13 @@ public static class ImGuiRaylibBackend
         );
     }
 
-    private static void TriangleVert(ImDrawVertPtr idx_vert)
+    private static void TriangleVert(ImDrawVertPtr idxVert)
     {
-        Vector4 color = ImGui.ColorConvertU32ToFloat4(idx_vert.col);
+        var color = ImGui.ColorConvertU32ToFloat4(idxVert.col);
 
         Rlgl.Color4f(color.X, color.Y, color.Z, color.W);
-        Rlgl.TexCoord2f(idx_vert.uv.X, idx_vert.uv.Y);
-        Rlgl.Vertex2f(idx_vert.pos.X, idx_vert.pos.Y);
+        Rlgl.TexCoord2f(idxVert.uv.X, idxVert.uv.Y);
+        Rlgl.Vertex2f(idxVert.pos.X, idxVert.pos.Y);
     }
 
     private static void RenderTriangles(uint count, uint indexStart, ImVector<ushort> indexBuffer, ImPtrVector<ImDrawVertPtr> vertBuffer, IntPtr texturePtr)
@@ -512,7 +511,7 @@ public static class ImGuiRaylibBackend
         Rlgl.Begin(DrawMode.Triangles);
         Rlgl.SetTexture(textureId);
 
-        for (int i = 0; i <= (count - 3); i += 3)
+        for (var i = 0; i <= (count - 3); i += 3)
         {
             if (Rlgl.CheckRenderBatchLimit(3))
             {
@@ -520,13 +519,13 @@ public static class ImGuiRaylibBackend
                 Rlgl.SetTexture(textureId);
             }
 
-            ushort indexA = indexBuffer[(int)indexStart + i];
-            ushort indexB = indexBuffer[(int)indexStart + i + 1];
-            ushort indexC = indexBuffer[(int)indexStart + i + 2];
+            var indexA = indexBuffer[(int)indexStart + i];
+            var indexB = indexBuffer[(int)indexStart + i + 1];
+            var indexC = indexBuffer[(int)indexStart + i + 2];
 
-            ImDrawVertPtr vertexA = vertBuffer[indexA];
-            ImDrawVertPtr vertexB = vertBuffer[indexB];
-            ImDrawVertPtr vertexC = vertBuffer[indexC];
+            var vertexA = vertBuffer[indexA];
+            var vertexB = vertBuffer[indexB];
+            var vertexC = vertBuffer[indexC];
 
             TriangleVert(vertexA);
             TriangleVert(vertexB);
@@ -544,11 +543,11 @@ public static class ImGuiRaylibBackend
 
         var data = ImGui.GetDrawData();
 
-        for (int l = 0; l < data.CmdListsCount; l++)
+        for (var l = 0; l < data.CmdListsCount; l++)
         {
-            ImDrawListPtr commandList = data.CmdLists[l];
+            var commandList = data.CmdLists[l];
 
-            for (int cmdIndex = 0; cmdIndex < commandList.CmdBuffer.Size; cmdIndex++)
+            for (var cmdIndex = 0; cmdIndex < commandList.CmdBuffer.Size; cmdIndex++)
             {
                 var cmd = commandList.CmdBuffer[cmdIndex];
 
@@ -560,7 +559,7 @@ public static class ImGuiRaylibBackend
                 );
                 if (cmd.UserCallback != IntPtr.Zero)
                 {
-                    Callback cb = Marshal.GetDelegateForFunctionPointer<Callback>(cmd.UserCallback);
+                    var cb = Marshal.GetDelegateForFunctionPointer<Callback>(cmd.UserCallback);
                     cb(commandList, cmd);
                     continue;
                 }
@@ -590,7 +589,7 @@ public static class ImGuiRaylibBackend
     /// </summary>
     public static void Shutdown()
     {
-        Raylib.UnloadTexture(FontTexture);
+        Raylib.UnloadTexture(_fontTexture);
         ImGui.DestroyContext();
     }
 
@@ -646,23 +645,23 @@ public static class ImGuiRaylibBackend
         if (sourceRect.Width < 0)
         {
             uv0.X = -(sourceRect.X / image.Width);
-            uv1.X = uv0.X - (float)(System.Math.Abs(sourceRect.Width) / image.Width);
+            uv1.X = uv0.X - System.Math.Abs(sourceRect.Width) / image.Width;
         }
         else
         {
             uv0.X = sourceRect.X / image.Width;
-            uv1.X = uv0.X + (float)(sourceRect.Width / image.Width);
+            uv1.X = uv0.X + sourceRect.Width / image.Width;
         }
 
         if (sourceRect.Height < 0)
         {
             uv0.Y = -(sourceRect.Y / image.Height);
-            uv1.Y = uv0.Y - (float)(System.Math.Abs(sourceRect.Height) / image.Height);
+            uv1.Y = uv0.Y - System.Math.Abs(sourceRect.Height) / image.Height;
         }
         else
         {
             uv0.Y = sourceRect.Y / image.Height;
-            uv1.Y = uv0.Y + (float)(sourceRect.Height / image.Height);
+            uv1.Y = uv0.Y + sourceRect.Height / image.Height;
         }
 
         ImGui.Image(new IntPtr(image.Id), new Vector2(destWidth, destHeight), uv0, uv1);
@@ -685,18 +684,18 @@ public static class ImGuiRaylibBackend
     /// <param name="center">When true the texture will be centered in the content area. When false the image will be left and top justified</param>
     public static void ImageRenderTextureFit(RenderTexture2D image, bool center = true)
     {
-        Vector2 area = ImGui.GetContentRegionAvail();
+        var area = ImGui.GetContentRegionAvail();
 
-        float scale = area.X / image.Texture.Width;
+        var scale = area.X / image.Texture.Width;
 
-        float y = image.Texture.Height * scale;
+        var y = image.Texture.Height * scale;
         if (y > area.Y)
         {
             scale = area.Y / image.Texture.Height;
         }
 
-        int sizeX = (int)(image.Texture.Width * scale);
-        int sizeY = (int)(image.Texture.Height * scale);
+        var sizeX = (int)(image.Texture.Width * scale);
+        var sizeY = (int)(image.Texture.Height * scale);
 
         if (center)
         {

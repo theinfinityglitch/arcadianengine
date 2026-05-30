@@ -1,73 +1,69 @@
-﻿using System.Reflection;
+﻿using System.Numerics;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
-using Raylib_cs;
-using ImGuiNET;
 using Friflo.Engine.ECS;
+using IconFonts;
+using ImGuiNET;
+using Raylib_cs;
 
 using ArcadianEngine.Core;
 using ArcadianEngine.Math;
 using ArcadianEngine.Resources;
 using ArcadianEngine.StateMachines;
-using System.Runtime.InteropServices;
-
-using IconFonts;
 using ArcadianEngine.Systems;
 
 namespace ArcadianEngine;
 
-/// <summary>
-/// A Arcadian Engine project, may it be a app or a game.
-/// </summary>
-public class Game<G> where G : class, IArcadianGame<G>
+/// An Arcadian Engine project, may it be an app or a game.
+public sealed class Game<TG> where TG : class, IArcadianGame<TG>
 {
-    private readonly G game;
-    private readonly GameContext<G> context;
+    private readonly TG _game;
+    private readonly GameContext<TG> _context;
 
-    public readonly ResourceContainer resource_container = new();
-    public readonly EntityStore world = new();
-    public readonly LinearStateMachine<G> gameStateMachine;
-    public bool shouldClose = false;
+    public readonly ResourceContainer ResourceContainer = new();
+    public readonly EntityStore World = new();
+    public readonly LinearStateMachine<TG> GameStateMachine;
+    public bool ShouldClose = false;
 
     // TODO: Move to the data manager
-    private readonly string title;
-    private readonly string formated_title;
-    private readonly Vector2i windowSize;
+    private readonly string _title;
+    private readonly string _formatedTitle;
+    private readonly Vector2I _windowSize;
 
-    private bool DrawWorldInspector = false;
-    private bool DrawConsole = false;
+    private bool _drawWorldInspector;
+    private bool _drawConsole;
 
-    public Game(G game, string title, Vector2i windowSize)
+    public Game(TG game, string title, Vector2I windowSize)
     {
-        this.game = game;
-        this.title = title;
-        this.windowSize = windowSize;
-        context = new(this);
-        gameStateMachine = new("GameStateMachine", context);
+        _game = game;
+        _title = title;
+        _windowSize = windowSize;
+        _context = new GameContext<TG>(this);
+        GameStateMachine = new LinearStateMachine<TG>("GameStateMachine", _context);
 
 #if DEBUG
-        formated_title = title + " [DEBUG]";
+        _formatedTitle = title + " [DEBUG]";
 #else
         formated_title = title;
 #endif
 
-        context.InsertResource(new MainScheduleOrder<G>(context));
-        // context.InsertResource(new RenderPipeline(windowSize));
-        context.InsertResource(new WorldHierarchyDebug<G>(context));
-        context.InsertResource(new ImGuiConsole());
+        _context.InsertResource(new MainScheduleOrder<TG>(_context));
+        _context.InsertResource(new RenderPipeline(windowSize));
+        _context.InsertResource(new WorldHierarchyDebug<TG>(_context));
+        _context.InsertResource(new ImGuiConsole());
 
-        context.GetResource<MainScheduleOrder<G>>().InsertSystem<PostUpdate, TransformPropagationSystem>(new TransformPropagationSystem());
+        _context.GetResource<MainScheduleOrder<TG>>().InsertSystem<PostUpdate, TransformPropagationSystem>(new TransformPropagationSystem());
     }
-
-    /// <summary>
+    
     /// Initialize the main window and start the game loop.
-    /// </summary>
     public void Run()
     {
         Raylib.SetConfigFlags(ConfigFlags.HighDpiWindow);
-        Raylib.InitWindow(windowSize.X, windowSize.Y, formated_title);
+        Raylib.InitWindow(_windowSize.X, _windowSize.Y, _formatedTitle);
         Raylib.SetTargetFPS(60);
 
-        float dpiScale = Raylib.GetWindowScaleDPI().X;
+        var dpiScale = Raylib.GetWindowScaleDPI().X;
 
         // Setup ImGui, load the engine default font (Roboto) and enable docking
         ImGuiRaylibBackend.Setup(() =>
@@ -75,7 +71,7 @@ public class Game<G> where G : class, IArcadianGame<G>
             ImGuiRaylibBackend.LoadDefaultFont = false;
             var style = ImGui.GetStyle();
             style.ScaleAllSizes(dpiScale);
-            style.FramePadding = new(ImGui.GetStyle().FramePadding.X, 4.0f * Raylib.GetWindowScaleDPI().X);
+            style.FramePadding = new Vector2(ImGui.GetStyle().FramePadding.X, 4.0f * Raylib.GetWindowScaleDPI().X);
             style.TabRounding = 0.0f;
             ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
             LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
@@ -85,7 +81,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         Initialize();
         Update(); // Update the game once at start
 
-        while (!shouldClose)
+        while (!ShouldClose)
         {
             Update();
         }
@@ -94,25 +90,25 @@ public class Game<G> where G : class, IArcadianGame<G>
         Raylib.CloseWindow();
     }
 
-    protected void LoadEmbeddedFont(string resourceName, float fontSize)
+    private static void LoadEmbeddedFont(string resourceName, float fontSize)
     {
         // 1. Get the current assembly
         var assembly = Assembly.GetExecutingAssembly();
 
         // 2. Open the resource stream
         // resourceName is usually "YourNamespace.YourFolder.FontFile.ttf"
-        using Stream? stream = assembly.GetManifestResourceStream(resourceName) ?? throw new Exception($"Resource {resourceName} not found.");
+        using var stream = assembly.GetManifestResourceStream(resourceName) ?? throw new Exception($"Resource {resourceName} not found.");
 
         // 3. Read stream into a byte array
-        byte[] buffer = new byte[stream.Length];
-        stream.Read(buffer, 0, buffer.Length);
+        var buffer = new byte[stream.Length];
+        stream.ReadExactly(buffer, 0, buffer.Length);
 
         // 4. Pass the data to ImGui
         // We use 'fixed' to get a pointer to the managed byte array
-        GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+        var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
         try
         {
-            IntPtr ptr = handle.AddrOfPinnedObject();
+            var ptr = handle.AddrOfPinnedObject();
             ImGui.GetIO().Fonts.AddFontFromMemoryTTF(ptr, buffer.Length, fontSize);
             ImGuiRaylibBackend.ReloadFonts();
         }
@@ -122,24 +118,24 @@ public class Game<G> where G : class, IArcadianGame<G>
         }
     }
 
-    protected unsafe void LoadEmbeddedIconFont(string resourceName, float fontSize, ushort iconMin, ushort iconMax)
+    private static unsafe void LoadEmbeddedIconFont(string resourceName, float fontSize, ushort iconMin, ushort iconMax)
     {
         var assembly = Assembly.GetExecutingAssembly();
-        using Stream stream = assembly.GetManifestResourceStream(resourceName)
-            ?? throw new Exception($"Embedded resource '{resourceName}' not found.");
+        using var stream = assembly.GetManifestResourceStream(resourceName)
+                           ?? throw new Exception($"Embedded resource '{resourceName}' not found.");
 
-        byte[] buffer = new byte[stream.Length];
-        stream.Read(buffer, 0, buffer.Length);
+        var buffer = new byte[stream.Length];
+        stream.ReadExactly(buffer, 0, buffer.Length);
 
-        GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+        var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
         try
         {
-            IntPtr ptr = handle.AddrOfPinnedObject();
-            ImGuiIOPtr io = ImGui.GetIO();
+            var ptr = handle.AddrOfPinnedObject();
+            var io = ImGui.GetIO();
 
             // Glyph range for FA5
             ushort[] ranges = [iconMin, iconMax, 0];
-            GCHandle rangeHandle = GCHandle.Alloc(ranges, GCHandleType.Pinned);
+            var rangeHandle = GCHandle.Alloc(ranges, GCHandleType.Pinned);
             try
             {
                 ImFontConfigPtr cfg = ImGuiNative.ImFontConfig_ImFontConfig();
@@ -166,22 +162,22 @@ public class Game<G> where G : class, IArcadianGame<G>
         }
     }
 
-    protected virtual void Initialize()
+    private void Initialize()
     {
-        game.OnInitialize(context);
-        game.OnLoadContent(context);
-        gameStateMachine.Initialize();
+        _game.OnInitialize(_context);
+        _game.OnLoadContent(_context);
+        GameStateMachine.Initialize();
     }
 
-    protected virtual void Update()
+    private void Update()
     {
         ImGuiRaylibBackend.Begin();
-        game.OnUpdate(context);
-        gameStateMachine.Update(Raylib.GetFrameTime());
-        context.GetResource<MainScheduleOrder<G>>().Run();
-        gameStateMachine.Draw();
+        _game.OnUpdate(_context);
+        GameStateMachine.Update(Raylib.GetFrameTime());
+        _context.GetResource<MainScheduleOrder<TG>>().Run();
+        GameStateMachine.Draw();
 
-        context.TryGetResource<RenderPipeline>(out var rp);
+        _context.TryGetResource<RenderPipeline>(out var rp);
 
         RenderTexture2D frame = new();
 
@@ -191,8 +187,8 @@ public class Game<G> where G : class, IArcadianGame<G>
 
         rp?.PresentToScreen(frame);
 
-        // Setup the ImGui dockspace
-        ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
+        // Set up the ImGui dockspace
+        var dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
         ImGui.DockSpaceOverViewport(0, ImGui.GetMainViewport(), dockspaceFlags);
 
 #if DEBUG
@@ -200,7 +196,7 @@ public class Game<G> where G : class, IArcadianGame<G>
         {
             if (ImGui.BeginMenu("Game"))
             {
-                if (ImGui.MenuItem("Quit")) context.Quit();
+                if (ImGui.MenuItem("Quit")) _context.Quit();
                 ImGui.SetItemTooltip("Stops the game loop and clear the contexts");
 
                 ImGui.EndMenu();
@@ -208,7 +204,7 @@ public class Game<G> where G : class, IArcadianGame<G>
 
             if (ImGui.BeginMenu("Window"))
             {
-                if (ImGui.MenuItem("Toggle borderless", null, context.IsBorderlessWindow())) context.TogleBorderlessWindow();
+                if (ImGui.MenuItem("Toggle borderless", null, _context.IsBorderlessWindow())) _context.ToggleBorderlessWindow();
                 ImGui.SetItemTooltip("Resizes window to match monitor resolution or make it floating");
 
                 ImGui.EndMenu();
@@ -216,24 +212,24 @@ public class Game<G> where G : class, IArcadianGame<G>
 
             if (ImGui.BeginMenu("Debug"))
             {
-                ImGui.MenuItem("Inspector", null, ref DrawWorldInspector);
-                ImGui.MenuItem("Console", null, ref DrawConsole);
+                ImGui.MenuItem("Inspector", null, ref _drawWorldInspector);
+                ImGui.MenuItem("Console", null, ref _drawConsole);
 
                 ImGui.EndMenu();
             }
 
-            string fps_label = $"{Raylib.GetFPS()} FPS";
-            float text_width = ImGui.CalcTextSize(fps_label).X;
-            ImGui.SetCursorPosX(ImGui.GetWindowWidth() - text_width - ImGui.GetStyle().ItemSpacing.X);
-            ImGui.Text(fps_label);
+            var fpsLabel = $"{Raylib.GetFPS()} FPS";
+            var textWidth = ImGui.CalcTextSize(fpsLabel).X;
+            ImGui.SetCursorPosX(ImGui.GetWindowWidth() - textWidth - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.Text(fpsLabel);
 
             ImGui.EndMainMenuBar();
         }
 
-        if (DrawWorldInspector)
-            context.GetResource<WorldHierarchyDebug<G>>().Draw();
-        if (DrawConsole)
-            context.GetResource<ImGuiConsole>().Draw();
+        if (_drawWorldInspector)
+            _context.GetResource<WorldHierarchyDebug<TG>>().Draw();
+        if (_drawConsole)
+            _context.GetResource<ImGuiConsole>().Draw();
 #endif
 
         ImGuiRaylibBackend.End();
@@ -241,6 +237,6 @@ public class Game<G> where G : class, IArcadianGame<G>
 
         Raylib.UnloadRenderTexture(frame);
 
-        if (Raylib.WindowShouldClose()) context.Quit();
+        if (Raylib.WindowShouldClose()) _context.Quit();
     }
 }

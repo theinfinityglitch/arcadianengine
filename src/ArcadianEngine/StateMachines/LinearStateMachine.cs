@@ -3,16 +3,16 @@ using ArcadianEngine.Exceptions;
 
 namespace ArcadianEngine.StateMachines;
 
-public class LinearStateMachine<G>(string stateMachineName, GameContext<G> cx) : StateMachine<G>(stateMachineName, cx) where G : class, IArcadianGame<G>
+public sealed class LinearStateMachine<TG>(string stateMachineName, GameContext<TG> cx) : StateMachine<TG>(stateMachineName, cx) where TG : class, IArcadianGame<TG>
 {
-    protected string _defaultStateName = "";
-    protected string _currentStateName = "";
+    private string DefaultStateName = "";
+    private string CurrentStateName = "";
 
     public override void AddState<T>(T state)
     {
-        if (_states.Count == 0)
+        if (States.Count == 0)
         {
-            _defaultStateName = typeof(T).Name;
+            DefaultStateName = typeof(T).Name;
         }
 
         base.AddState(state);
@@ -20,47 +20,47 @@ public class LinearStateMachine<G>(string stateMachineName, GameContext<G> cx) :
 
     public override void Initialize()
     {
-        if (_defaultStateName != "") ChangeState(_defaultStateName);
+        if (DefaultStateName != "") ChangeState(DefaultStateName);
 
         base.Initialize();
     }
 
-    public virtual void ChangeState(string stateName)
+    public void ChangeState(string stateName)
     {
-        if (!_states.ContainsKey(stateName) || stateName == "") throw new StateNotFoundException(stateMachineName, stateName);
-        if (stateName == _currentStateName) throw new EmptyStateNameException(stateMachineName);
+        if (!States.ContainsKey(stateName) || stateName == "") throw new StateNotFoundException(StateMachineName, stateName);
+        if (stateName == CurrentStateName) throw new EmptyStateNameException(StateMachineName);
 
-        Console.WriteLine($"Set state {stateMachineName}::{stateName}");
+        Console.WriteLine($"Set state {StateMachineName}::{stateName}");
 
-        if (_currentStateName != "") _states[_currentStateName].OnExit();
-        _currentStateName = stateName;
-        _states[_currentStateName].OnEnter();
+        if (CurrentStateName != "") States[CurrentStateName].OnExit();
+        CurrentStateName = stateName;
+        States[CurrentStateName].OnEnter();
     }
 
     public override void HandleInput()
     {
-        if (_currentStateName == "") return;
+        if (CurrentStateName == "") return;
 
         base.HandleInput();
 
-        _states[_currentStateName].OnHandleInput();
+        States[CurrentStateName].OnHandleInput();
     }
 
     public override void Update(float deltaTime)
     {
-        if (_currentStateName == "") return;
+        if (CurrentStateName == "") return;
 
         base.Update(deltaTime);
 
-        _states[_currentStateName].OnUpdate(deltaTime);
+        States[CurrentStateName].OnUpdate(deltaTime);
     }
 
     public override void Draw()
     {
-        if (_currentStateName == "") return;
+        if (CurrentStateName == "") return;
 
         base.Draw();
 
-        _states[_currentStateName].OnDraw();
+        States[CurrentStateName].OnDraw();
     }
 }
