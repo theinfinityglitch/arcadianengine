@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Reflection;
 using ImGuiNET;
 using Raylib_cs;
 
@@ -8,7 +9,7 @@ namespace ArcadianEngine;
 public static class ImGuiRaylibBackend
 {
     public static bool LoadDefaultFont = true;
-    internal static IntPtr ImGuiContext = IntPtr.Zero;
+    private static IntPtr _imGuiContext = IntPtr.Zero;
 
     private static ImGuiMouseCursor _currentMouseCursor = ImGuiMouseCursor.COUNT;
     private static Dictionary<ImGuiMouseCursor, MouseCursor> _mouseCursorMap = [];
@@ -16,12 +17,12 @@ public static class ImGuiRaylibBackend
 
     static readonly Dictionary<KeyboardKey, ImGuiKey> RaylibKeyMap = [];
 
-    internal static bool LastFrameFocused;
+    private static bool _lastFrameFocused;
 
-    internal static bool LastControlPressed;
-    internal static bool LastShiftPressed;
-    internal static bool LastAltPressed;
-    internal static bool LastSuperPressed;
+    private static bool _lastControlPressed;
+    private static bool _lastShiftPressed;
+    private static bool _lastAltPressed;
+    private static bool _lastSuperPressed;
 
     public delegate void SetupUserFontsCallback(ImGuiIOPtr imGuiIo);
 
@@ -29,7 +30,9 @@ public static class ImGuiRaylibBackend
     /// Callback for cases where the user wants to install additional fonts.
     /// </summary>
     public static SetupUserFontsCallback? SetupUserFonts = null;
+
     private unsafe delegate sbyte* GetClipTextCallback(IntPtr userData);
+
     private unsafe delegate void SetClipTextCallback(IntPtr userData, sbyte* text);
 
     private static GetClipTextCallback _getClipCallback = null!;
@@ -67,17 +70,17 @@ public static class ImGuiRaylibBackend
     {
         _mouseCursorMap = [];
 
-        LastFrameFocused = Raylib.IsWindowFocused();
-        LastControlPressed = false;
-        LastShiftPressed = false;
-        LastAltPressed = false;
-        LastSuperPressed = false;
+        _lastFrameFocused = Raylib.IsWindowFocused();
+        _lastControlPressed = false;
+        _lastShiftPressed = false;
+        _lastAltPressed = false;
+        _lastSuperPressed = false;
 
         _fontTexture.Id = 0;
 
         SetupKeymap();
 
-        ImGuiContext = ImGui.CreateContext();
+        _imGuiContext = ImGui.CreateContext();
     }
 
     /// <summary>
@@ -88,7 +91,7 @@ public static class ImGuiRaylibBackend
     {
         SetupMouseCursors();
 
-        ImGui.SetCurrentContext(ImGuiContext);
+        ImGui.SetCurrentContext(_imGuiContext);
 
         var fonts = ImGui.GetIO().Fonts;
 
@@ -101,7 +104,8 @@ public static class ImGuiRaylibBackend
 
         SetupUserFonts?.Invoke(io);
 
-        io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos | ImGuiBackendFlags.HasGamepad;
+        io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos |
+                           ImGuiBackendFlags.HasGamepad;
 
         io.MousePos.X = 0;
         io.MousePos.Y = 0;
@@ -247,12 +251,85 @@ public static class ImGuiRaylibBackend
         _mouseCursorMap[ImGuiMouseCursor.NotAllowed] = MouseCursor.NotAllowed;
     }
 
+    public static void LoadEmbeddedFont(string resourceName, float fontSize)
+    {
+        // 1. Get the current assembly
+        var assembly = Assembly.GetExecutingAssembly();
+
+        // 2. Open the resource stream
+        // resourceName is usually "YourNamespace.YourFolder.FontFile.ttf"
+        using var stream = assembly.GetManifestResourceStream(resourceName) ??
+                           throw new Exception($"Resource {resourceName} not found.");
+
+        // 3. Read stream into a byte array
+        var buffer = new byte[stream.Length];
+        stream.ReadExactly(buffer, 0, buffer.Length);
+
+        // 4. Pass the data to ImGui
+        // We use 'fixed' to get a pointer to the managed byte array
+        var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+        try
+        {
+            var ptr = handle.AddrOfPinnedObject();
+            ImGui.GetIO().Fonts.AddFontFromMemoryTTF(ptr, buffer.Length, fontSize);
+            ReloadFonts();
+        }
+        finally
+        {
+            handle.Free();
+        }
+    }
+
+    public static unsafe void LoadEmbeddedIconFont(string resourceName, float fontSize, ushort iconMin, ushort iconMax)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using var stream = assembly.GetManifestResourceStream(resourceName)
+                           ?? throw new Exception($"Embedded resource '{resourceName}' not found.");
+
+        var buffer = new byte[stream.Length];
+        stream.ReadExactly(buffer, 0, buffer.Length);
+
+        var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+        try
+        {
+            var ptr = handle.AddrOfPinnedObject();
+            var io = ImGui.GetIO();
+
+            // Glyph range for FA5
+            ushort[] ranges = [iconMin, iconMax, 0];
+            var rangeHandle = GCHandle.Alloc(ranges, GCHandleType.Pinned);
+            try
+            {
+                ImFontConfigPtr cfg = ImGuiNative.ImFontConfig_ImFontConfig();
+                cfg.MergeMode = true; // merge into previous font
+                cfg.PixelSnapH = true; // cleaner rendering for icons
+                cfg.GlyphMinAdvanceX = fontSize; // monospace icons
+
+                io.Fonts.AddFontFromMemoryTTF(
+                    ptr,
+                    buffer.Length,
+                    fontSize,
+                    cfg,
+                    rangeHandle.AddrOfPinnedObject()
+                );
+            }
+            finally
+            {
+                rangeHandle.Free();
+            }
+        }
+        finally
+        {
+            handle.Free();
+        }
+    }
+
     /// <summary>
     /// Forces the font texture atlas to be recomputed and re-cached
     /// </summary>
     public static unsafe void ReloadFonts()
     {
-        ImGui.SetCurrentContext(ImGuiContext);
+        ImGui.SetCurrentContext(_imGuiContext);
         var io = ImGui.GetIO();
 
         io.Fonts.GetTexDataAsRGBA32(out byte* pixels, out var width, out var height, out var bytesPerPixel);
@@ -274,12 +351,12 @@ public static class ImGuiRaylibBackend
         io.Fonts.SetTexID(new IntPtr(_fontTexture.Id));
     }
 
-    unsafe internal static sbyte* RImGuiGetClipText(IntPtr userData)
+    internal static unsafe sbyte* RImGuiGetClipText(IntPtr userData)
     {
         return Raylib.GetClipboardText();
     }
 
-    unsafe internal static void RlImGuiSetClipText(IntPtr userData, sbyte* text)
+    internal static unsafe void RlImGuiSetClipText(IntPtr userData, sbyte* text)
     {
         Raylib.SetClipboardText(text);
     }
@@ -328,27 +405,19 @@ public static class ImGuiRaylibBackend
         var wheelMove = Raylib.GetMouseWheelMoveV();
         io.AddMouseWheelEvent(wheelMove.X, wheelMove.Y);
 
-        if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) == 0)
+        if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) != 0) return;
+        var imguiCursor = ImGui.GetMouseCursor();
+        if (imguiCursor == _currentMouseCursor && !io.MouseDrawCursor) return;
+        _currentMouseCursor = imguiCursor;
+        if (io.MouseDrawCursor || imguiCursor == ImGuiMouseCursor.None)
+            Raylib.HideCursor();
+        else
         {
-            var imguiCursor = ImGui.GetMouseCursor();
-            if (imguiCursor != _currentMouseCursor || io.MouseDrawCursor)
+            Raylib.ShowCursor();
+
+            if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) == 0)
             {
-                _currentMouseCursor = imguiCursor;
-                if (io.MouseDrawCursor || imguiCursor == ImGuiMouseCursor.None)
-                    Raylib.HideCursor();
-                else
-                {
-                    Raylib.ShowCursor();
-
-                    if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) == 0)
-                    {
-
-                        if (!_mouseCursorMap.ContainsKey(imguiCursor))
-                            Raylib.SetMouseCursor(MouseCursor.Default);
-                        else
-                            Raylib.SetMouseCursor(_mouseCursorMap[imguiCursor]);
-                    }
-                }
+                Raylib.SetMouseCursor(_mouseCursorMap.GetValueOrDefault(imguiCursor, MouseCursor.Default));
             }
         }
     }
@@ -359,30 +428,30 @@ public static class ImGuiRaylibBackend
 
         bool focused = Raylib.IsWindowFocused();
 
-        if (focused != LastFrameFocused)
+        if (focused != _lastFrameFocused)
             io.AddFocusEvent(focused);
 
-        LastFrameFocused = focused;
+        _lastFrameFocused = focused;
 
-        // handle the modifyer key events so that shortcuts work
+        // handle the modifier key events so that shortcuts work
         var ctrlDown = RlImGuiIsControlDown();
         var shiftDown = RlImGuiIsShiftDown();
         var altDown = RlImGuiIsAltDown();
         var superDown = RlImGuiIsSuperDown();
 
-        if (ctrlDown != LastControlPressed)
+        if (ctrlDown != _lastControlPressed)
             io.AddKeyEvent(ImGuiKey.ModCtrl, ctrlDown);
-        if (shiftDown != LastShiftPressed)
+        if (shiftDown != _lastShiftPressed)
             io.AddKeyEvent(ImGuiKey.ModShift, shiftDown);
-        if (altDown != LastAltPressed)
+        if (altDown != _lastAltPressed)
             io.AddKeyEvent(ImGuiKey.ModAlt, altDown);
-        if (superDown != LastSuperPressed)
+        if (superDown != _lastSuperPressed)
             io.AddKeyEvent(ImGuiKey.ModSuper, superDown);
 
-        LastAltPressed = altDown;
-        LastControlPressed = ctrlDown;
-        LastShiftPressed = shiftDown;
-        LastSuperPressed = superDown;
+        _lastAltPressed = altDown;
+        _lastControlPressed = ctrlDown;
+        _lastShiftPressed = shiftDown;
+        _lastSuperPressed = superDown;
 
         // get the pressed keys, they are in event order
         var keyId = Raylib.GetKeyPressed();
@@ -391,16 +460,15 @@ public static class ImGuiRaylibBackend
         {
             var key = (KeyboardKey)keyId;
 
-            if (RaylibKeyMap.ContainsKey(key))
-                io.AddKeyEvent(RaylibKeyMap[key], true);
+            if (RaylibKeyMap.TryGetValue(key, out var value))
+                io.AddKeyEvent(value, true);
 
             keyId = Raylib.GetKeyPressed();
         }
 
         // look for any keys that were down last frame and see if they were down and are released
-        foreach (var keyItr in RaylibKeyMap)
-            if (Raylib.IsKeyReleased(keyItr.Key))
-                io.AddKeyEvent(keyItr.Value, false);
+        foreach (var keyItr in RaylibKeyMap.Where(keyItr => Raylib.IsKeyReleased(keyItr.Key)))
+            io.AddKeyEvent(keyItr.Value, false);
 
         // add the text input in order
         var pressed = Raylib.GetCharPressed();
@@ -412,36 +480,34 @@ public static class ImGuiRaylibBackend
         }
 
         // gamepads
-        if ((io.ConfigFlags & ImGuiConfigFlags.NavEnableGamepad) != 0 && Raylib.IsGamepadAvailable(0))
-        {
-            HandleGamepadButtonEvent(io, GamepadButton.LeftFaceUp, ImGuiKey.GamepadDpadUp);
-            HandleGamepadButtonEvent(io, GamepadButton.LeftFaceRight, ImGuiKey.GamepadDpadRight);
-            HandleGamepadButtonEvent(io, GamepadButton.LeftFaceDown, ImGuiKey.GamepadDpadDown);
-            HandleGamepadButtonEvent(io, GamepadButton.LeftFaceLeft, ImGuiKey.GamepadDpadLeft);
+        if ((io.ConfigFlags & ImGuiConfigFlags.NavEnableGamepad) == 0 || !Raylib.IsGamepadAvailable(0)) return;
+        HandleGamepadButtonEvent(io, GamepadButton.LeftFaceUp, ImGuiKey.GamepadDpadUp);
+        HandleGamepadButtonEvent(io, GamepadButton.LeftFaceRight, ImGuiKey.GamepadDpadRight);
+        HandleGamepadButtonEvent(io, GamepadButton.LeftFaceDown, ImGuiKey.GamepadDpadDown);
+        HandleGamepadButtonEvent(io, GamepadButton.LeftFaceLeft, ImGuiKey.GamepadDpadLeft);
 
-            HandleGamepadButtonEvent(io, GamepadButton.RightFaceUp, ImGuiKey.GamepadFaceUp);
-            HandleGamepadButtonEvent(io, GamepadButton.RightFaceRight, ImGuiKey.GamepadFaceLeft);
-            HandleGamepadButtonEvent(io, GamepadButton.RightFaceDown, ImGuiKey.GamepadFaceDown);
-            HandleGamepadButtonEvent(io, GamepadButton.RightFaceLeft, ImGuiKey.GamepadFaceRight);
+        HandleGamepadButtonEvent(io, GamepadButton.RightFaceUp, ImGuiKey.GamepadFaceUp);
+        HandleGamepadButtonEvent(io, GamepadButton.RightFaceRight, ImGuiKey.GamepadFaceLeft);
+        HandleGamepadButtonEvent(io, GamepadButton.RightFaceDown, ImGuiKey.GamepadFaceDown);
+        HandleGamepadButtonEvent(io, GamepadButton.RightFaceLeft, ImGuiKey.GamepadFaceRight);
 
-            HandleGamepadButtonEvent(io, GamepadButton.LeftTrigger1, ImGuiKey.GamepadL1);
-            HandleGamepadButtonEvent(io, GamepadButton.LeftTrigger2, ImGuiKey.GamepadL2);
-            HandleGamepadButtonEvent(io, GamepadButton.RightTrigger1, ImGuiKey.GamepadR1);
-            HandleGamepadButtonEvent(io, GamepadButton.RightTrigger2, ImGuiKey.GamepadR2);
-            HandleGamepadButtonEvent(io, GamepadButton.LeftThumb, ImGuiKey.GamepadL3);
-            HandleGamepadButtonEvent(io, GamepadButton.RightThumb, ImGuiKey.GamepadR3);
+        HandleGamepadButtonEvent(io, GamepadButton.LeftTrigger1, ImGuiKey.GamepadL1);
+        HandleGamepadButtonEvent(io, GamepadButton.LeftTrigger2, ImGuiKey.GamepadL2);
+        HandleGamepadButtonEvent(io, GamepadButton.RightTrigger1, ImGuiKey.GamepadR1);
+        HandleGamepadButtonEvent(io, GamepadButton.RightTrigger2, ImGuiKey.GamepadR2);
+        HandleGamepadButtonEvent(io, GamepadButton.LeftThumb, ImGuiKey.GamepadL3);
+        HandleGamepadButtonEvent(io, GamepadButton.RightThumb, ImGuiKey.GamepadR3);
 
-            HandleGamepadButtonEvent(io, GamepadButton.MiddleLeft, ImGuiKey.GamepadStart);
-            HandleGamepadButtonEvent(io, GamepadButton.MiddleRight, ImGuiKey.GamepadBack);
+        HandleGamepadButtonEvent(io, GamepadButton.MiddleLeft, ImGuiKey.GamepadStart);
+        HandleGamepadButtonEvent(io, GamepadButton.MiddleRight, ImGuiKey.GamepadBack);
 
-            // left stick
-            HandleGamepadStickEvent(io, GamepadAxis.LeftX, ImGuiKey.GamepadLStickLeft, ImGuiKey.GamepadLStickRight);
-            HandleGamepadStickEvent(io, GamepadAxis.LeftY, ImGuiKey.GamepadLStickUp, ImGuiKey.GamepadLStickDown);
+        // left stick
+        HandleGamepadStickEvent(io, GamepadAxis.LeftX, ImGuiKey.GamepadLStickLeft, ImGuiKey.GamepadLStickRight);
+        HandleGamepadStickEvent(io, GamepadAxis.LeftY, ImGuiKey.GamepadLStickUp, ImGuiKey.GamepadLStickDown);
 
-            // right stick
-            HandleGamepadStickEvent(io, GamepadAxis.RightX, ImGuiKey.GamepadRStickLeft, ImGuiKey.GamepadRStickRight);
-            HandleGamepadStickEvent(io, GamepadAxis.RightY, ImGuiKey.GamepadRStickUp, ImGuiKey.GamepadRStickDown);
-        }
+        // right stick
+        HandleGamepadStickEvent(io, GamepadAxis.RightX, ImGuiKey.GamepadRStickLeft, ImGuiKey.GamepadRStickRight);
+        HandleGamepadStickEvent(io, GamepadAxis.RightY, ImGuiKey.GamepadRStickUp, ImGuiKey.GamepadRStickDown);
     }
 
 
@@ -469,7 +535,7 @@ public static class ImGuiRaylibBackend
     /// <param name="dt">optional delta time, any value < 0 will use raylib GetFrameTime</param>
     public static void Begin(float dt = -1)
     {
-        ImGui.SetCurrentContext(ImGuiContext);
+        ImGui.SetCurrentContext(_imGuiContext);
 
         NewFrame(dt);
         FrameEvents();
@@ -498,7 +564,8 @@ public static class ImGuiRaylibBackend
         Rlgl.Vertex2f(idxVert.pos.X, idxVert.pos.Y);
     }
 
-    private static void RenderTriangles(uint count, uint indexStart, ImVector<ushort> indexBuffer, ImPtrVector<ImDrawVertPtr> vertBuffer, IntPtr texturePtr)
+    private static void RenderTriangles(uint count, uint indexStart, ImVector<ushort> indexBuffer,
+        ImPtrVector<ImDrawVertPtr> vertBuffer, IntPtr texturePtr)
     {
         if (count < 3)
             return;
@@ -531,6 +598,7 @@ public static class ImGuiRaylibBackend
             TriangleVert(vertexB);
             TriangleVert(vertexC);
         }
+
         Rlgl.End();
     }
 
@@ -564,11 +632,13 @@ public static class ImGuiRaylibBackend
                     continue;
                 }
 
-                RenderTriangles(cmd.ElemCount, cmd.IdxOffset, commandList.IdxBuffer, commandList.VtxBuffer, cmd.TextureId);
+                RenderTriangles(cmd.ElemCount, cmd.IdxOffset, commandList.IdxBuffer, commandList.VtxBuffer,
+                    cmd.TextureId);
 
                 Rlgl.DrawRenderBatchActive();
             }
         }
+
         Rlgl.SetTexture(0);
         Rlgl.DisableScissorTest();
         Rlgl.EnableBackfaceCulling();
@@ -579,7 +649,7 @@ public static class ImGuiRaylibBackend
     /// </summary>
     public static void End()
     {
-        ImGui.SetCurrentContext(ImGuiContext);
+        ImGui.SetCurrentContext(_imGuiContext);
         ImGui.Render();
         RenderData();
     }
@@ -673,7 +743,8 @@ public static class ImGuiRaylibBackend
     /// <param name="image">The render texture to draw</param>
     public static void ImageRenderTexture(RenderTexture2D image)
     {
-        ImageRect(image.Texture, image.Texture.Width, image.Texture.Height, new Rectangle(0, 0, image.Texture.Width, -image.Texture.Height));
+        ImageRect(image.Texture, image.Texture.Width, image.Texture.Height,
+            new Rectangle(0, 0, image.Texture.Width, -image.Texture.Height));
     }
 
     /// <summary>
@@ -729,6 +800,4 @@ public static class ImGuiRaylibBackend
     {
         return ImGui.ImageButton(name, new IntPtr(image.Id), size);
     }
-
 }
-

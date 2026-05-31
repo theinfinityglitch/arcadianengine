@@ -1,4 +1,5 @@
-﻿using ArcadianEngine.Core;
+﻿using System.Diagnostics.CodeAnalysis;
+using ArcadianEngine.Core;
 using ArcadianEngine.Resources;
 using Friflo.Engine.ECS.Systems;
 using Raylib_cs;
@@ -48,7 +49,7 @@ public class GameContext<TG>(Game<TG> game) where TG : class, IArcadianGame<TG>
     public TRes GetResource<TRes>() where TRes : class
         => game.ResourceContainer.GetResource<TRes>();
 
-    public bool TryGetResource<TRes>(out TRes? resource) where TRes : class
+    public bool TryGetResource<TRes>([MaybeNullWhen(false)] out TRes resource) where TRes : class
         => game.ResourceContainer.TryGetResource(out resource);
 
     public IReadOnlyDictionary<Type, object> GetAllResources()

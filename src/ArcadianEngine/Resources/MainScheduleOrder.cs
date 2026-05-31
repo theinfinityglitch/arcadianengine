@@ -3,7 +3,7 @@ using Friflo.Engine.ECS.Systems;
 
 namespace ArcadianEngine.Resources;
 
-public class MainScheduleOrder<TG> : ScheduleOrder where TG : class, IArcadianGame<TG>
+public sealed class MainScheduleOrder<TG> : IScheduleOrder, IDisposable where TG : class, IArcadianGame<TG>
 {
     private readonly Dictionary<string, SystemRoot> _inner = [];
     private readonly GameContext<TG> _context;
@@ -18,7 +18,7 @@ public class MainScheduleOrder<TG> : ScheduleOrder where TG : class, IArcadianGa
         InsertSchedule<Draw>();
     }
 
-    public override void InsertSchedule<T>()
+    public void InsertSchedule<T>() where T : struct, ISchedule
     {
         SystemRoot schedule = new(_context.game.World);
 
@@ -26,13 +26,13 @@ public class MainScheduleOrder<TG> : ScheduleOrder where TG : class, IArcadianGa
             _inner[typeof(T).Name] = schedule;
     }
 
-    public override void RemoveSchedule<T>()
+    public void RemoveSchedule<T>() where T : struct, ISchedule
     {
-        if (_inner.ContainsKey(typeof(T).Name))
-            _inner.Remove(typeof(T).Name);
+        _inner.Remove(typeof(T).Name);
     }
 
-    public override TSystemType InsertSystem<TSchedule, TSystemType>(TSystemType system)
+    public TSystemType InsertSystem<TSchedule, TSystemType>(TSystemType system) where TSchedule : struct, ISchedule
+        where TSystemType : BaseSystem
     {
         if (_inner.TryGetValue(typeof(TSchedule).Name, out var schedule))
             schedule.Add(system);
@@ -40,17 +40,19 @@ public class MainScheduleOrder<TG> : ScheduleOrder where TG : class, IArcadianGa
         return system;
     }
 
-    public override void RemoveSystem<T>(BaseSystem system)
+    public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
     {
         if (_inner.TryGetValue(typeof(T).Name, out var schedule))
             schedule.Remove(system);
     }
 
-    public override void Run()
+    public void Run()
     {
-        foreach (var schedule in _inner)
-        {
-            schedule.Value.Update(default);
-        }
+        foreach (var schedule in _inner) schedule.Value.Update(default);
+    }
+
+    public void Dispose()
+    {
+        _inner.Clear();
     }
 }

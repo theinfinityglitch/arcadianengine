@@ -5,14 +5,15 @@ using Raylib_cs;
 
 namespace ArcadianEngine.Resources;
 
-public class RenderPipeline(Vector2I virtualSize)
+public sealed class RenderPipeline(Vector2I virtualSize) : IDisposable
 {
     private readonly SortedDictionary<int, List<DrawCommand>> _commands = [];
     private readonly Dictionary<int, RenderTexture2D> _layerTextures = [];
+    private readonly List<RenderTexture2D> _frameTextures = [];
 
     [Export] public Vector2I VirtualSize = virtualSize;
 
-    public void Draw(DrawCommand command)
+    private void Draw(DrawCommand command)
     {
         if (!_commands.ContainsKey(command.layer))
             _commands[command.layer] = [];
@@ -20,16 +21,25 @@ public class RenderPipeline(Vector2I virtualSize)
     }
 
     public void DrawSprite(Texture2D tex, Vector2 pos, int layer = 0, Color? tint = null)
-        => Draw(new DrawSpriteCommand(layer, tex, pos, tint ?? Color.White));
+    {
+        Draw(new DrawSpriteCommand(layer, tex, pos, tint ?? Color.White));
+    }
 
     public void DrawRect(Rectangle rect, Color color, int layer = 0)
-        => Draw(new DrawRectCommand(layer, rect, color));
+    {
+        Draw(new DrawRectCommand(layer, rect, color));
+    }
 
     public void DrawRectangle(Rectangle rect, Vector2 origin, float rotation, Color color, int layer = 0)
-        => Draw(new DrawRectangleCommand(layer, rect, origin, rotation, color));
+    {
+        Draw(new DrawRectangleCommand(layer, rect, origin, rotation, color));
+    }
 
-    public void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color, int layer)
-        => Draw(new DrawRingCommand(layer, center, innerRadius, outerRadius, startAngle, endAngle, segments, color));
+    public void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle,
+        int segments, Color color, int layer)
+    {
+        Draw(new DrawRingCommand(layer, center, innerRadius, outerRadius, startAngle, endAngle, segments, color));
+    }
 
     private RenderTexture2D GetOrCreateLayerTexture(int layer)
     {
@@ -81,6 +91,8 @@ public class RenderPipeline(Vector2I virtualSize)
 
     public void PresentToScreen(RenderTexture2D frame)
     {
+        _frameTextures.Add(frame);
+
         var screenW = Raylib.GetRenderWidth();
         var screenH = Raylib.GetRenderHeight();
 
@@ -111,5 +123,8 @@ public class RenderPipeline(Vector2I virtualSize)
         foreach (var tex in _layerTextures.Values)
             Raylib.UnloadRenderTexture(tex);
         _layerTextures.Clear();
+        foreach (var tex in _frameTextures)
+            Raylib.UnloadRenderTexture(tex);
+        _frameTextures.Clear();
     }
 }

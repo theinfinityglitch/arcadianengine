@@ -1,22 +1,20 @@
 ﻿using System.Numerics;
-using System.Reflection;
-using System.Runtime.InteropServices;
-
 using Friflo.Engine.ECS;
 using IconFonts;
 using ImGuiNET;
 using Raylib_cs;
-
 using ArcadianEngine.Core;
 using ArcadianEngine.Math;
 using ArcadianEngine.Resources;
 using ArcadianEngine.StateMachines;
-using ArcadianEngine.Systems;
 
 namespace ArcadianEngine;
 
-/// An Arcadian Engine project, may it be an app or a game.
-public sealed class Game<TG> where TG : class, IArcadianGame<TG>
+/// <summary>
+/// This class is the entry point for most games. Handles setting up a window and graphics and runs a game loop
+/// </summary>
+/// <typeparam name="TG">This is the main loop of an arcadian game. This has the callbacks to relevant events in the game.</typeparam>
+public partial class Game<TG> where TG : class, IArcadianGame<TG>
 {
     private readonly TG _game;
     private readonly GameContext<TG> _context;
@@ -43,21 +41,33 @@ public sealed class Game<TG> where TG : class, IArcadianGame<TG>
         GameStateMachine = new LinearStateMachine<TG>("GameStateMachine", _context);
 
 #if DEBUG
-        _formatedTitle = title + " [DEBUG]";
+        _formatedTitle = _title + " [DEBUG]";
 #else
-        formated_title = title;
+        formated_title = _title;
 #endif
-
-        _context.InsertResource(new MainScheduleOrder<TG>(_context));
-        _context.InsertResource(new RenderPipeline(windowSize));
-        _context.InsertResource(new WorldHierarchyDebug<TG>(_context));
-        _context.InsertResource(new ImGuiConsole());
-
-        _context.GetResource<MainScheduleOrder<TG>>().InsertSystem<PostUpdate, TransformPropagationSystem>(new TransformPropagationSystem());
     }
-    
+
+    ~Game()
+    {
+        ResourceContainer.Dispose();
+    }
+
     /// Initialize the main window and start the game loop.
     public void Run()
+    {
+        DoInitialize();
+        BeginRun();
+        DoUpdate(); // Update the game once at start
+
+        while (!ShouldClose) DoUpdate();
+
+        EndRun();
+
+        ImGuiRaylibBackend.Shutdown();
+        Raylib.CloseWindow();
+    }
+
+    private void DoInitialize()
     {
         Raylib.SetConfigFlags(ConfigFlags.HighDpiWindow);
         Raylib.InitWindow(_windowSize.X, _windowSize.Y, _formatedTitle);
@@ -74,118 +84,34 @@ public sealed class Game<TG> where TG : class, IArcadianGame<TG>
             style.FramePadding = new Vector2(ImGui.GetStyle().FramePadding.X, 4.0f * Raylib.GetWindowScaleDPI().X);
             style.TabRounding = 0.0f;
             ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
-            LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
-            LoadEmbeddedIconFont("lucide.ttf", 12.0f * dpiScale, Lucide.IconMin, Lucide.IconMax);
+            ImGuiRaylibBackend.LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
+            ImGuiRaylibBackend.LoadEmbeddedIconFont("lucide.ttf", 12.0f * dpiScale, Lucide.IconMin, Lucide.IconMax);
         });
 
         Initialize();
-        Update(); // Update the game once at start
-
-        while (!ShouldClose)
-        {
-            Update();
-        }
-
-        ImGuiRaylibBackend.Shutdown();
-        Raylib.CloseWindow();
-    }
-
-    private static void LoadEmbeddedFont(string resourceName, float fontSize)
-    {
-        // 1. Get the current assembly
-        var assembly = Assembly.GetExecutingAssembly();
-
-        // 2. Open the resource stream
-        // resourceName is usually "YourNamespace.YourFolder.FontFile.ttf"
-        using var stream = assembly.GetManifestResourceStream(resourceName) ?? throw new Exception($"Resource {resourceName} not found.");
-
-        // 3. Read stream into a byte array
-        var buffer = new byte[stream.Length];
-        stream.ReadExactly(buffer, 0, buffer.Length);
-
-        // 4. Pass the data to ImGui
-        // We use 'fixed' to get a pointer to the managed byte array
-        var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-        try
-        {
-            var ptr = handle.AddrOfPinnedObject();
-            ImGui.GetIO().Fonts.AddFontFromMemoryTTF(ptr, buffer.Length, fontSize);
-            ImGuiRaylibBackend.ReloadFonts();
-        }
-        finally
-        {
-            handle.Free();
-        }
-    }
-
-    private static unsafe void LoadEmbeddedIconFont(string resourceName, float fontSize, ushort iconMin, ushort iconMax)
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        using var stream = assembly.GetManifestResourceStream(resourceName)
-                           ?? throw new Exception($"Embedded resource '{resourceName}' not found.");
-
-        var buffer = new byte[stream.Length];
-        stream.ReadExactly(buffer, 0, buffer.Length);
-
-        var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-        try
-        {
-            var ptr = handle.AddrOfPinnedObject();
-            var io = ImGui.GetIO();
-
-            // Glyph range for FA5
-            ushort[] ranges = [iconMin, iconMax, 0];
-            var rangeHandle = GCHandle.Alloc(ranges, GCHandleType.Pinned);
-            try
-            {
-                ImFontConfigPtr cfg = ImGuiNative.ImFontConfig_ImFontConfig();
-                cfg.MergeMode = true;  // merge into previous font
-                cfg.PixelSnapH = true; // cleaner rendering for icons
-                cfg.GlyphMinAdvanceX = fontSize; // monospace icons
-
-                io.Fonts.AddFontFromMemoryTTF(
-                    ptr,
-                    buffer.Length,
-                    fontSize,
-                    cfg,
-                    rangeHandle.AddrOfPinnedObject()
-                );
-            }
-            finally
-            {
-                rangeHandle.Free();
-            }
-        }
-        finally
-        {
-            handle.Free();
-        }
-    }
-
-    private void Initialize()
-    {
         _game.OnInitialize(_context);
+
+        LoadContent();
         _game.OnLoadContent(_context);
+
         GameStateMachine.Initialize();
     }
 
-    private void Update()
+    private void DoUpdate()
     {
         ImGuiRaylibBackend.Begin();
+
+        Update(Raylib.GetFrameTime());
+        if (BeginDraw()) Draw(Raylib.GetFrameTime());
+
         _game.OnUpdate(_context);
         GameStateMachine.Update(Raylib.GetFrameTime());
         _context.GetResource<MainScheduleOrder<TG>>().Run();
         GameStateMachine.Draw();
 
-        _context.TryGetResource<RenderPipeline>(out var rp);
-
-        RenderTexture2D frame = new();
-
-        if (rp != null) frame = rp.Flush();
-
         Raylib.BeginDrawing();
 
-        rp?.PresentToScreen(frame);
+        EndDraw();
 
         // Set up the ImGui dockspace
         var dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
@@ -204,7 +130,8 @@ public sealed class Game<TG> where TG : class, IArcadianGame<TG>
 
             if (ImGui.BeginMenu("Window"))
             {
-                if (ImGui.MenuItem("Toggle borderless", null, _context.IsBorderlessWindow())) _context.ToggleBorderlessWindow();
+                if (ImGui.MenuItem("Toggle borderless", null, _context.IsBorderlessWindow()))
+                    _context.ToggleBorderlessWindow();
                 ImGui.SetItemTooltip("Resizes window to match monitor resolution or make it floating");
 
                 ImGui.EndMenu();
@@ -235,7 +162,7 @@ public sealed class Game<TG> where TG : class, IArcadianGame<TG>
         ImGuiRaylibBackend.End();
         Raylib.EndDrawing();
 
-        Raylib.UnloadRenderTexture(frame);
+        if (_context.TryGetResource<RenderPipeline>(out var pipeline)) pipeline.Dispose();
 
         if (Raylib.WindowShouldClose()) _context.Quit();
     }
