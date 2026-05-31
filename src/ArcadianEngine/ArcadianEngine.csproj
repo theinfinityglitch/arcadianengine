@@ -5,8 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <!-- <PublishAot>true</PublishAot>
-        <IsAotCompatible>true</IsAotCompatible> -->
+        <!--        <PublishAot>true</PublishAot>-->
+        <!--        <IsAotCompatible>true</IsAotCompatible>-->
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Friflo.Engine.ECS" Version="3.5.0"/>
+        <PackageReference Include="Friflo.Engine.ECS" Version="3.6.0"/>
         <PackageReference Include="ImGui.NET" Version="1.91.6.1"/>
     </ItemGroup>
 
