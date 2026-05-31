@@ -64,4 +64,15 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
     protected virtual void EndRun()
     {
     }
+
+    protected virtual void UnloadContent()
+    {
+    }
+
+    /// <summary>
+    /// Override this to unload graphical resources loaded by the game.
+    /// </summary>
+    protected virtual void Load()
+    {
+    }
 }

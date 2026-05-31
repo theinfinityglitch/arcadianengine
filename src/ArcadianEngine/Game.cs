@@ -26,7 +26,6 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
 
     // TODO: Move to the data manager
     private readonly string _title;
-    private readonly string _formatedTitle;
     private readonly Vector2I _windowSize;
 
     private bool _drawWorldInspector;
@@ -39,12 +38,6 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
         _windowSize = windowSize;
         _context = new GameContext<TG>(this);
         GameStateMachine = new LinearStateMachine<TG>("GameStateMachine", _context);
-
-#if DEBUG
-        _formatedTitle = _title + " [DEBUG]";
-#else
-        formated_title = _title;
-#endif
     }
 
     ~Game()
@@ -70,7 +63,7 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
     private void DoInitialize()
     {
         Raylib.SetConfigFlags(ConfigFlags.HighDpiWindow);
-        Raylib.InitWindow(_windowSize.X, _windowSize.Y, _formatedTitle);
+        Raylib.InitWindow(_windowSize.X, _windowSize.Y, _title);
         Raylib.SetTargetFPS(60);
 
         var dpiScale = Raylib.GetWindowScaleDPI().X;
