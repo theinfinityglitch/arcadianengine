@@ -20,26 +20,31 @@ public class TransformPropagationSystem : QuerySystem<Transform2D>
         // Only bother with hierarchy propagation if any parented entities exist
         if (_parentQuery?.Count == 0)
         {
-            Query.ForEachEntity((ref Transform2D transform, Entity _) =>
-            {
-                transform.GlobalPosition = transform.Position;
-                transform.GlobalScale = transform.Scale;
-                transform.GlobalRotation = transform.Rotation;
-                transform.GlobalZIndex = transform.ZIndex;
-            });
+            Query.ForEachEntity(
+                (ref transform, _) =>
+                {
+                    transform.GlobalPosition = transform.Position;
+                    transform.GlobalScale = transform.Scale;
+                    transform.GlobalRotation = transform.Rotation;
+                    transform.GlobalZIndex = transform.ZIndex;
+                }
+            );
             return;
         }
 
-        Query.ForEachEntity((ref Transform2D _, Entity entity) =>
-        {
-            if (entity.Parent.IsNull)
-                PropagateDown(entity, null);
-        });
+        Query.ForEachEntity(
+            (ref _, entity) =>
+            {
+                if (entity.Parent.IsNull)
+                    PropagateDown(entity, null);
+            }
+        );
     }
 
     private void PropagateDown(Entity entity, Transform2D? parentTransform)
     {
-        if (!entity.TryGetComponent<Transform2D>(out var transform)) return;
+        if (!entity.TryGetComponent<Transform2D>(out var transform))
+            return;
         // if (!entity.TryGetComponent<GlobalTransform2D>(out var global)) return;
 
         if (parentTransform == null)
@@ -54,10 +59,12 @@ public class TransformPropagationSystem : QuerySystem<Transform2D>
             var cos = MathF.Cos(parentTransform.Value.Rotation);
             var sin = MathF.Sin(parentTransform.Value.Rotation);
 
-            transform.GlobalPosition = parentTransform.Value.Position + new Vector2(
-                transform.Position.X * cos - transform.Position.Y * sin,
-                transform.Position.X * sin + transform.Position.Y * cos
-            );
+            transform.GlobalPosition =
+                parentTransform.Value.Position
+                + new Vector2(
+                    transform.Position.X * cos - transform.Position.Y * sin,
+                    transform.Position.X * sin + transform.Position.Y * cos
+                );
 
             transform.GlobalScale = parentTransform.Value.Scale * transform.Scale;
             transform.GlobalRotation = parentTransform.Value.Rotation + transform.Rotation;

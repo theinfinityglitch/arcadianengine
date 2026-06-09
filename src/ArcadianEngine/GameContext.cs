@@ -6,13 +6,14 @@ using Raylib_cs;
 
 namespace ArcadianEngine;
 
-public class GameContext<TG>(Game<TG> game) where TG : class, IArcadianGame<TG>
+public class GameContext<TG>(Game<TG> game)
+    where TG : class, IArcadianGame<TG>
 {
-    public Game<TG> game { get; private set; } = game;
+    public Game<TG> Game { get; private set; } = game;
 
     public void Quit()
     {
-        game.ShouldClose = true;
+        Game.ShouldClose = true;
     }
 
     public bool IsBorderlessWindow()
@@ -28,34 +29,39 @@ public class GameContext<TG>(Game<TG> game) where TG : class, IArcadianGame<TG>
             Raylib.ClearWindowState(ConfigFlags.TopmostWindow);
     }
 
-    public void InsertGameState<T>(T state) where T : State<TG>, new()
+    public void InsertGameState<T>(T state)
+        where T : State<TG>, new()
     {
-        game.GameStateMachine.AddState(state);
+        Game.GameStateMachine.AddState(state);
     }
 
-    public TSystemType InsertSystem<TSchedule, TSystemType>(TSystemType system) where TSchedule : struct, ISchedule where TSystemType : BaseSystem
+    public TSystemType InsertSystem<TSchedule, TSystemType>(TSystemType system)
+        where TSchedule : struct, ISchedule
+        where TSystemType : BaseSystem
     {
         return GetResource<MainScheduleOrder<TG>>().InsertSystem<TSchedule, TSystemType>(system);
     }
 
-    public void RemoveSystem<T>(BaseSystem system) where T : struct, ISchedule
+    public void RemoveSystem<T>(BaseSystem system)
+        where T : struct, ISchedule
     {
         GetResource<MainScheduleOrder<TG>>().RemoveSystem<T>(system);
     }
 
-    public void InsertResource<TRes>(TRes resource) where TRes : class
-        => game.ResourceContainer.InsertResource(resource);
+    public void InsertResource<TRes>(TRes resource)
+        where TRes : class => Game.ResourceContainer.InsertResource(resource);
 
-    public TRes GetResource<TRes>() where TRes : class
-        => game.ResourceContainer.GetResource<TRes>();
+    public TRes GetResource<TRes>()
+        where TRes : class => Game.ResourceContainer.GetResource<TRes>();
 
-    public bool TryGetResource<TRes>([MaybeNullWhen(false)] out TRes resource) where TRes : class
-        => game.ResourceContainer.TryGetResource(out resource);
+    public bool TryGetResource<TRes>([MaybeNullWhen(false)] out TRes resource)
+        where TRes : class => Game.ResourceContainer.TryGetResource(out resource);
 
-    public IReadOnlyDictionary<Type, object> GetAllResources()
-        => game.ResourceContainer.GetAllResources();
+    public IReadOnlyDictionary<Type, object> GetAllResources() =>
+        Game.ResourceContainer.GetAllResources();
 
-    public TRes GetResource<TRes>(Action<TRes> actions) where TRes : class
+    public TRes GetResource<TRes>(Action<TRes> actions)
+        where TRes : class
     {
         var resource = GetResource<TRes>();
 

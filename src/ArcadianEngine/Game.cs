@@ -1,12 +1,12 @@
 ﻿using System.Numerics;
-using Friflo.Engine.ECS;
-using IconFonts;
-using ImGuiNET;
-using Raylib_cs;
 using ArcadianEngine.Core;
 using ArcadianEngine.Math;
 using ArcadianEngine.Resources;
 using ArcadianEngine.StateMachines;
+using Friflo.Engine.ECS;
+using IconFonts;
+using ImGuiNET;
+using Raylib_cs;
 
 namespace ArcadianEngine;
 
@@ -14,7 +14,8 @@ namespace ArcadianEngine;
 /// This class is the entry point for most games. Handles setting up a window and graphics and runs a game loop
 /// </summary>
 /// <typeparam name="TG">This is the main loop of an arcadian game. This has the callbacks to relevant events in the game.</typeparam>
-public partial class Game<TG> where TG : class, IArcadianGame<TG>
+public partial class Game<TG>
+    where TG : class, IArcadianGame<TG>
 {
     private readonly TG _game;
     private readonly GameContext<TG> _context;
@@ -52,7 +53,8 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
         BeginRun();
         DoUpdate(); // Update the game once at start
 
-        while (!ShouldClose) DoUpdate();
+        while (!ShouldClose)
+            DoUpdate();
 
         EndRun();
 
@@ -74,11 +76,19 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
             ImGuiRaylibBackend.LoadDefaultFont = false;
             var style = ImGui.GetStyle();
             style.ScaleAllSizes(dpiScale);
-            style.FramePadding = new Vector2(ImGui.GetStyle().FramePadding.X, 4.0f * Raylib.GetWindowScaleDPI().X);
+            style.FramePadding = new Vector2(
+                ImGui.GetStyle().FramePadding.X,
+                4.0f * Raylib.GetWindowScaleDPI().X
+            );
             style.TabRounding = 0.0f;
             ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
             ImGuiRaylibBackend.LoadEmbeddedFont("default_font.ttf", 16.0f * dpiScale);
-            ImGuiRaylibBackend.LoadEmbeddedIconFont("lucide.ttf", 12.0f * dpiScale, Lucide.IconMin, Lucide.IconMax);
+            ImGuiRaylibBackend.LoadEmbeddedIconFont(
+                "lucide.ttf",
+                12.0f * dpiScale,
+                Lucide.IconMin,
+                Lucide.IconMax
+            );
         });
 
         Initialize();
@@ -95,7 +105,8 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
         ImGuiRaylibBackend.Begin();
 
         Update(Raylib.GetFrameTime());
-        if (BeginDraw()) Draw(Raylib.GetFrameTime());
+        if (BeginDraw())
+            Draw(Raylib.GetFrameTime());
 
         _game.OnUpdate(_context);
         GameStateMachine.Update(Raylib.GetFrameTime());
@@ -115,7 +126,8 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
         {
             if (ImGui.BeginMenu("Game"))
             {
-                if (ImGui.MenuItem("Quit")) _context.Quit();
+                if (ImGui.MenuItem("Quit"))
+                    _context.Quit();
                 ImGui.SetItemTooltip("Stops the game loop and clear the contexts");
 
                 ImGui.EndMenu();
@@ -125,7 +137,9 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
             {
                 if (ImGui.MenuItem("Toggle borderless", null, _context.IsBorderlessWindow()))
                     _context.ToggleBorderlessWindow();
-                ImGui.SetItemTooltip("Resizes window to match monitor resolution or make it floating");
+                ImGui.SetItemTooltip(
+                    "Resizes window to match monitor resolution or make it floating"
+                );
 
                 ImGui.EndMenu();
             }
@@ -140,7 +154,9 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
 
             var fpsLabel = $"{Raylib.GetFPS()} FPS";
             var textWidth = ImGui.CalcTextSize(fpsLabel).X;
-            ImGui.SetCursorPosX(ImGui.GetWindowWidth() - textWidth - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SetCursorPosX(
+                ImGui.GetWindowWidth() - textWidth - ImGui.GetStyle().ItemSpacing.X
+            );
             ImGui.Text(fpsLabel);
 
             ImGui.EndMainMenuBar();
@@ -155,8 +171,11 @@ public partial class Game<TG> where TG : class, IArcadianGame<TG>
         ImGuiRaylibBackend.End();
         Raylib.EndDrawing();
 
-        if (_context.TryGetResource<RenderPipeline>(out var pipeline)) pipeline.Dispose();
+        if (_context.TryGetResource<RenderPipeline>(out var pipeline))
+            pipeline.Dispose();
 
-        if (Raylib.WindowShouldClose()) _context.Quit();
+        if (Raylib.WindowShouldClose())
+            _context.Quit();
     }
 }
+

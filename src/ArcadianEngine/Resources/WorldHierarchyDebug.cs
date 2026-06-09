@@ -10,9 +10,10 @@ using Raylib_cs;
 
 namespace ArcadianEngine.Resources;
 
-public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : class, IArcadianGame<TG>
+public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx)
+    where TG : class, IArcadianGame<TG>
 {
-    private readonly EntityStore _world = cx.game.World;
+    private readonly EntityStore _world = cx.Game.World;
     private readonly Dictionary<(int, Type), bool> _openInspectors = [];
     private readonly Dictionary<Type, Action<Entity, object>> _setterCache = [];
     private int? _selectedEntityId;
@@ -31,11 +32,16 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
             {
                 foreach (var (type, _) in resources)
                 {
-                    var itemFlags = ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth;
+                    var itemFlags =
+                        ImGuiTreeNodeFlags.Leaf
+                        | ImGuiTreeNodeFlags.NoTreePushOnOpen
+                        | ImGuiTreeNodeFlags.FramePadding
+                        | ImGuiTreeNodeFlags.SpanFullWidth;
                     var isSelected = _selectedResourceType == type;
                     var name = type.GetFriendlyName();
 
-                    if (isSelected) itemFlags |= ImGuiTreeNodeFlags.Selected;
+                    if (isSelected)
+                        itemFlags |= ImGuiTreeNodeFlags.Selected;
 
                     ImGui.TreeNodeEx($"{Lucide.Database} {name}", itemFlags);
 
@@ -68,7 +74,8 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
             var (entityId, type) = key;
             var open = _openInspectors[key];
 
-            if (!open) continue;
+            if (!open)
+                continue;
 
             // Find the entity
             var entity = _world.Entities.FirstOrDefault(e => e.Id == entityId);
@@ -80,8 +87,10 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
 
             string entityName;
 
-            if (entity.TryGetComponent<EntityName>(out var name)) entityName = name.value;
-            else entityName = $"Entity {entity.Id}";
+            if (entity.TryGetComponent<EntityName>(out var name))
+                entityName = name.value;
+            else
+                entityName = $"Entity {entity.Id}";
 
             var title = $"{Lucide.Settings} {type.Name} ({entityName})";
             ImGui.SetNextWindowSize(new Vector2(300, 200), ImGuiCond.FirstUseEver);
@@ -101,16 +110,28 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         var hasAny = hasChildren || entity.Components.Count > 0 || entity.Tags.Count > 0;
         var isSelected = _selectedEntityId == entity.Id;
 
-        var entityFlags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding;
+        var entityFlags =
+            ImGuiTreeNodeFlags.OpenOnArrow
+            | ImGuiTreeNodeFlags.OpenOnDoubleClick
+            | ImGuiTreeNodeFlags.SpanFullWidth
+            | ImGuiTreeNodeFlags.FramePadding;
         var groupFlags = ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding;
-        var itemFlags = ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth;
+        var itemFlags =
+            ImGuiTreeNodeFlags.Leaf
+            | ImGuiTreeNodeFlags.NoTreePushOnOpen
+            | ImGuiTreeNodeFlags.FramePadding
+            | ImGuiTreeNodeFlags.SpanFullWidth;
 
-        if (!hasAny) entityFlags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
-        if (isSelected) entityFlags |= ImGuiTreeNodeFlags.Selected;
+        if (!hasAny)
+            entityFlags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
+        if (isSelected)
+            entityFlags |= ImGuiTreeNodeFlags.Selected;
         string entityName;
 
-        if (entity.TryGetComponent<EntityName>(out var name)) entityName = name.value;
-        else entityName = $"Entity {entity.Id}";
+        if (entity.TryGetComponent<EntityName>(out var name))
+            entityName = name.value;
+        else
+            entityName = $"Entity {entity.Id}";
 
         var opened = ImGui.TreeNodeEx($"{Lucide.Box} {entityName}", entityFlags);
 
@@ -132,13 +153,13 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
                         var type = component.Type.Type;
                         var key = (entity.Id, type);
 
-                        ImGui.TreeNodeEx(
-                            $"{Lucide.Settings} {type.Name}",
-                            itemFlags
-                        );
+                        ImGui.TreeNodeEx($"{Lucide.Settings} {type.Name}", itemFlags);
 
                         // Double click — open floating inspector for this specific component
-                        if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                        if (
+                            ImGui.IsItemHovered()
+                            && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)
+                        )
                             _openInspectors[key] = true;
                     }
                     ImGui.TreePop();
@@ -153,10 +174,7 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
                     {
                         var type = tag.Type;
 
-                        ImGui.TreeNodeEx(
-                            $"{Lucide.Tag} {type.Name}",
-                            itemFlags
-                        );
+                        ImGui.TreeNodeEx($"{Lucide.Tag} {type.Name}", itemFlags);
                     }
                     ImGui.TreePop();
                 }
@@ -202,8 +220,10 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
 
         string entityName;
 
-        if (entity.TryGetComponent<EntityName>(out var name)) entityName = name.value;
-        else entityName = $"Entity {entity.Id}";
+        if (entity.TryGetComponent<EntityName>(out var name))
+            entityName = name.value;
+        else
+            entityName = $"Entity {entity.Id}";
 
         ImGui.Text($"{Lucide.Box} {entityName}");
         ImGui.Separator();
@@ -217,7 +237,14 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         // Components section
         if (entity.Components.Count > 0)
         {
-            if (ImGui.TreeNodeEx($"{Lucide.ServerCog} Components", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanFullWidth))
+            if (
+                ImGui.TreeNodeEx(
+                    $"{Lucide.ServerCog} Components",
+                    ImGuiTreeNodeFlags.FramePadding
+                        | ImGuiTreeNodeFlags.DefaultOpen
+                        | ImGuiTreeNodeFlags.SpanFullWidth
+                )
+            )
             {
                 ImGui.Unindent();
                 foreach (var component in entity.Components)
@@ -227,12 +254,19 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
 
                     ImGui.SetNextItemAllowOverlap();
 
-                    var fields = type
-                        .GetFields(BindingFlags.Public | BindingFlags.Instance)
-                        .Where(f => f.GetCustomAttribute<ExportAttribute>() != null).ToArray();
-                    var open = fields.Length != 0
-                        ? ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.SpanFullWidth)
-                        : ImGui.CollapsingHeader($"{Lucide.Settings} {type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth);
+                    var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                        .Where(f => f.GetCustomAttribute<ExportAttribute>() != null)
+                        .ToArray();
+                    var open =
+                        fields.Length != 0
+                            ? ImGui.CollapsingHeader(
+                                $"{Lucide.Settings} {type.Name}",
+                                ImGuiTreeNodeFlags.SpanFullWidth
+                            )
+                            : ImGui.CollapsingHeader(
+                                $"{Lucide.Settings} {type.Name}",
+                                ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth
+                            );
 
                     ImGui.SameLine(ImGui.GetContentRegionAvail().X - 20);
                     if (ImGui.SmallButton($"{Lucide.ExternalLink}##{type.Name}"))
@@ -255,13 +289,25 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         if (entity.Tags.Count > 0)
         {
             ImGui.Separator();
-            if (ImGui.TreeNodeEx($"{Lucide.Tags} Tags", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanFullWidth))
+            if (
+                ImGui.TreeNodeEx(
+                    $"{Lucide.Tags} Tags",
+                    ImGuiTreeNodeFlags.FramePadding
+                        | ImGuiTreeNodeFlags.DefaultOpen
+                        | ImGuiTreeNodeFlags.SpanFullWidth
+                )
+            )
             {
                 ImGui.Unindent();
 
                 foreach (var tag in entity.Tags)
                 {
-                    ImGui.TreeNodeEx($"{Lucide.Tag} {tag.Type.Name}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.SpanFullWidth);
+                    ImGui.TreeNodeEx(
+                        $"{Lucide.Tag} {tag.Type.Name}",
+                        ImGuiTreeNodeFlags.Leaf
+                            | ImGuiTreeNodeFlags.FramePadding
+                            | ImGuiTreeNodeFlags.SpanFullWidth
+                    );
                     ImGui.TreePop();
                 }
 
@@ -290,7 +336,9 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
             .GetFields(BindingFlags.Public | BindingFlags.Instance)
             .Where(f => f.GetCustomAttribute<ExportAttribute>() != null)
             .ToArray();
-        var props = _selectedResourceType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var props = _selectedResourceType.GetProperties(
+            BindingFlags.Public | BindingFlags.Instance
+        );
 
         if (fields.Length == 0 && props.Length == 0)
         {
@@ -310,7 +358,8 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         // Properties (read-only for now since setters may have side effects)
         foreach (var prop in props)
         {
-            if (!prop.CanRead) continue;
+            if (!prop.CanRead)
+                continue;
             var value = prop.GetValue(resource);
             ImGui.TextDisabled($"{prop.Name}: {value?.ToString() ?? "null"}");
         }
@@ -321,10 +370,10 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         var getMethod = typeof(Entity)
             .GetMethods()
             .First(m =>
-                m.Name == "GetComponent" &&
-                m.IsGenericMethodDefinition &&
-                m.GetGenericArguments().Length == 1 &&
-                m.GetParameters().Length == 0
+                m.Name == "GetComponent"
+                && m.IsGenericMethodDefinition
+                && m.GetGenericArguments().Length == 1
+                && m.GetParameters().Length == 0
             )
             .MakeGenericMethod(componentType);
 
@@ -332,7 +381,8 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         var fields = componentType
             .GetFields(BindingFlags.Public | BindingFlags.Instance)
             .Where(f => f.GetCustomAttribute<ExportAttribute>() != null);
-        if (component == null) return;
+        if (component == null)
+            return;
 
         var modified = false;
 
@@ -349,7 +399,7 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         }
 
         if (modified)
-            GetSetter(componentType)(entity, component!);
+            GetSetter(componentType)(entity, component);
     }
 
     private Action<Entity, object> GetSetter(Type componentType)
@@ -367,13 +417,18 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         return setter;
     }
 
-    private static void TypedSet<T>(Entity entity, object component) where T : struct, IComponent
+    private static void TypedSet<T>(Entity entity, object component)
+        where T : struct, IComponent
     {
         var typed = (T)component;
         entity.Set(typed); // called generically, no ref issues
     }
 
-    private (bool modified, object? value) DrawEditableField(string differentialName, string name, object? value)
+    private (bool modified, object? value) DrawEditableField(
+        string differentialName,
+        string name,
+        object? value
+    )
     {
         // 1. Insert spaces before every capital letter
         var spaced = FieldRegex().Replace(name, " $1").Trim();
@@ -385,77 +440,78 @@ public partial class WorldHierarchyDebug<TG>(GameContext<TG> cx) where TG : clas
         switch (value)
         {
             case int i:
-                {
-                    ImGui.DragInt(fieldName, ref i);
-                    return (ImGui.IsItemEdited(), i);
-                }
+            {
+                ImGui.DragInt(fieldName, ref i);
+                return (ImGui.IsItemEdited(), i);
+            }
             case float f:
-                {
-                    ImGui.DragFloat(fieldName, ref f, 0.1f, default, default, "%.3f");
-                    return (ImGui.IsItemEdited(), f);
-                }
+            {
+                ImGui.DragFloat(fieldName, ref f, 0.1f, default, default, "%.3f");
+                return (ImGui.IsItemEdited(), f);
+            }
             case bool b:
-                {
-                    ImGui.Checkbox(fieldName, ref b);
-                    return (ImGui.IsItemEdited(), b);
-                }
+            {
+                ImGui.Checkbox(fieldName, ref b);
+                return (ImGui.IsItemEdited(), b);
+            }
             case string s:
-                {
-                    ImGui.InputText(fieldName, ref s, 256);
-                    return (ImGui.IsItemEdited(), s);
-                }
+            {
+                ImGui.InputText(fieldName, ref s, 256);
+                return (ImGui.IsItemEdited(), s);
+            }
             case Vector2 v:
-                {
-                    Vector2 imVec = new(v.X, v.Y);
-                    ImGui.DragFloat2(fieldName, ref imVec);
-                    return (ImGui.IsItemEdited(), new Vector2(imVec.X, imVec.Y));
-                }
+            {
+                Vector2 imVec = new(v.X, v.Y);
+                ImGui.DragFloat2(fieldName, ref imVec);
+                return (ImGui.IsItemEdited(), new Vector2(imVec.X, imVec.Y));
+            }
             case Vector3 v:
-                {
-                    Vector3 imVec = new(v.X, v.Y, v.Z);
-                    ImGui.DragFloat3(fieldName, ref imVec);
-                    // bool changed = ImGui.IsItemDeactivatedAfterEdit();
-                    return (ImGui.IsItemEdited(), new Vector3(imVec.X, imVec.Y, imVec.Z));
-                }
+            {
+                Vector3 imVec = new(v.X, v.Y, v.Z);
+                ImGui.DragFloat3(fieldName, ref imVec);
+                // bool changed = ImGui.IsItemDeactivatedAfterEdit();
+                return (ImGui.IsItemEdited(), new Vector3(imVec.X, imVec.Y, imVec.Z));
+            }
             case Vector2I v:
-                {
-                    int[] vir = [v.X, v.Y];
-                    ImGui.DragInt2(fieldName, ref vir[0]);
-                    return (ImGui.IsItemEdited(), new Vector2I(vir[0], vir[1]));
-                }
+            {
+                int[] vir = [v.X, v.Y];
+                ImGui.DragInt2(fieldName, ref vir[0]);
+                return (ImGui.IsItemEdited(), new Vector2I(vir[0], vir[1]));
+            }
             case List<int> li:
+            {
+                var selectedIdx = 0;
+                if (ImGui.BeginListBox(fieldName))
                 {
-                    var selectedIdx = 0;
-                    if (ImGui.BeginListBox(fieldName))
+                    foreach (var i in li)
                     {
-                        foreach (var i in li)
-                        {
-                            var isSelected = selectedIdx == i;
-                            if (ImGui.Selectable($"{i}", isSelected))
-                                selectedIdx = i;
+                        var isSelected = selectedIdx == i;
+                        if (ImGui.Selectable($"{i}", isSelected))
+                            selectedIdx = i;
 
-                            if (isSelected)
-                                ImGui.SetItemDefaultFocus();
-                        }
-                        ImGui.EndListBox();
+                        if (isSelected)
+                            ImGui.SetItemDefaultFocus();
                     }
-
-                    return (false, li);
+                    ImGui.EndListBox();
                 }
-            case Color c:
-                {
-                    Vector4 colorVec = new(
-                        c.R / 255f, c.G / 255f, c.B / 255f, c.A / 255f
-                    );
-                    ImGui.ColorEdit4(fieldName, ref colorVec);
 
-                    return (ImGui.IsItemEdited(), new Color(
+                return (false, li);
+            }
+            case Color c:
+            {
+                Vector4 colorVec = new(c.R / 255f, c.G / 255f, c.B / 255f, c.A / 255f);
+                ImGui.ColorEdit4(fieldName, ref colorVec);
+
+                return (
+                    ImGui.IsItemEdited(),
+                    new Color(
                         (byte)(colorVec.X * 255),
                         (byte)(colorVec.Y * 255),
                         (byte)(colorVec.Z * 255),
-                        (byte)(colorVec.W * 255))
-                    );
-                }
+                        (byte)(colorVec.W * 255)
+                    )
+                );
+            }
             default:
                 ImGui.TextDisabled($"{fieldName}: {value?.ToString() ?? "null"}");
                 return (false, value);

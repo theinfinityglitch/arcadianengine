@@ -1,5 +1,6 @@
 namespace ArcadianEngine.Editor;
 
-public interface IArcadianArchitect<TSelf> : IArcadianGame<TSelf> where TSelf : class, IArcadianGame<TSelf>
+public interface IArcadianArchitect<TSelf, TGame> : IArcadianGame<TGame>
+    where TSelf : class, IArcadianArchitect<TSelf, TGame> where TGame : class, IArcadianGame<TGame>
 {
 }
